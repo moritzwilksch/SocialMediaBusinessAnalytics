@@ -1,9 +1,11 @@
-#%%
+# %%
+from matplotlib import pyplot as plt
 import pandas as pd
 from rich.console import Console
+import seaborn as sns
 c = Console(highlight=False)
 
-#%%
+# %%
 root_path = "../"  # IPyhton
 # root_path = "./"  # CLI
 
@@ -12,23 +14,28 @@ with open(root_path + "00_source_data/sp500_tickers.txt") as f:
 
 tickers = a.split("\n")
 
-#%%
-results = []
-for ticker in tickers:
+# %%
+LOAD_FROM_DISK = True
 
-    try:
-        c.print(f"Loading {ticker}...")
-        df = pd.read_csv(root_path + f"20_outputs/pre_study/{ticker}_tweets.csv")
-        results.append(
-            (ticker, len(df))
-        )
-    except FileNotFoundError:
-        c.print(f"[ERROR] {ticker} not found!", style='white on red')
+if not LOAD_FROM_DISK:
+    results = []
+    for ticker in tickers:
 
-# Not found: BIIB, MSI, PKI, 
+        try:
+            c.print(f"Loading {ticker}...")
+            df = pd.read_csv(root_path + f"20_outputs/pre_study/{ticker}_tweets.csv")
+            results.append(
+                (ticker, len(df))
+            )
+        except FileNotFoundError:
+            c.print(f"[ERROR] {ticker} not found!", style='white on red')
 
-#%%
-print( pd.DataFrame(results).sort_values(by=1, ascending=False).head(15).to_markdown())
+    # Not found: BIIB, MSI, PKI,
+    df = pd.DataFrame(results, columns=['ticker', 'n_tweets'])
+else:
+    df = pd.read_parquet(root_path + "20_outputs/pre_study_data.parquet")
+# %%
+df.sort_values(by='n_tweets', ascending=False).head(15)
 
 # Top 15:
 # |Symbol| #tweets|
@@ -48,3 +55,35 @@ print( pd.DataFrame(results).sort_values(by=1, ascending=False).head(15).to_mark
 # | PENN |   9897 |
 # | INTC |   9186 |
 # | TEL  |   8795 |
+
+
+# %%
+plt.rcParams['font.sans-serif'] = ['Arial']
+
+total = 25
+used = 10
+
+fig, ax = plt.subplots(figsize=(10, 6))
+top_df = df.nlargest(total, 'n_tweets')
+sns.barplot(
+    data=top_df,
+    y='ticker',
+    x='n_tweets',
+    ax=ax,
+    palette=['#00305e'] * used + ['0.8'] * (total - used),
+    #ec='k'
+    )
+ax.set(
+    xlabel='Number of tweets',
+    ylabel='',
+    xticks=range(0, 150_001, 25_000),
+    xticklabels=[f'{x/1000:.0f}{"k" if x > 0 else ""}' for x in range(0, 150_001, 25_000)],
+)
+
+for idx, tup in enumerate(top_df.iloc[:10].itertuples()):
+    ax.text(x=tup.n_tweets, y=idx+0.25, s=f"{tup.n_tweets/1000:.0f}k", color='w', ha='right')
+    #ax.text(x=0, y=idx+0.25, s=f"{tup.n_tweets/1000:.0f}k", color='w')
+
+
+sns.despine()
+plt.savefig(root_path + "20_outputs/pre_study.svg")
