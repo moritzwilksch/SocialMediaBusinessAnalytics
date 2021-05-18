@@ -15,7 +15,7 @@ root_path = "./"  # CLI
 # [X] AMD
 # [X] NFLX
 # [X] NVDA
-# [ ] INTC
+# [X] INTC
 
 TICKER = "INTC" 
 
