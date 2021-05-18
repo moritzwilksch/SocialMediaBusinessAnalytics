@@ -21,12 +21,7 @@ df = pd.concat(dfs, axis=1).set_axis(tickers, axis=1)
 # %%
 # df = (df/df.iloc[0]).reset_index()  # Normalized to t=0
 df = df.reset_index()
-# %%
-fig, ax = plt.subplots(figsize=(20, 8))
-melt_df = df.melt(id_vars='created_at', value_name='num', var_name='ticker')
-melt_df.groupby('ticker').head(1)
-sns.lineplot(data=melt_df, x='created_at', y='num', hue='ticker', ax=ax, legend=False)
-
+df = df[~(df.created_at == pd.to_datetime("2021-05-01"))]
 
 #%%
 def k_formatter(x, pos):
