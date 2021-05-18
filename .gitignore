@@ -140,3 +140,5 @@ dmypy.json
 00_source_data/TWTR_tweets.csv
 00_source_data/TSLA_tweets.csv
 00_source_data/TSLA_tweets.backup.csv
+
+20_outputs/parquets/
