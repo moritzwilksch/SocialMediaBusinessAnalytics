@@ -128,4 +128,15 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+
+00_source_data/AAPL_tweets.csv
+00_source_data/AMD_tweets.csv
+00_source_data/AMZN_tweets.csv
+00_source_data/FB_tweets.csv
+00_source_data/INTC_tweets.csv
+00_source_data/MSFT_tweets.csv
+00_source_data/NFLX_tweets.csv
+00_source_data/NVDA_tweets.csv
+00_source_data/TWTR_tweets.csv
 00_source_data/TSLA_tweets.csv
+00_source_data/TSLA_tweets.backup.csv

@@ -6,18 +6,18 @@ c = twint.Config()
 root_path = "./"  # CLI
 
 # TODO: 
-# [ ] TSLA
-# [ ] AAPL
-# [ ] AMZN
-# [ ] FB
-# [ ] MSFT
-# [ ] TWTR
-# [ ] AMD
-# [ ] NFLX
-# [ ] NVDA
+# [X] TSLA
+# [X] AAPL
+# [X] AMZN
+# [X] FB
+# [X] MSFT
+# [X] TWTR
+# [X] AMD
+# [X] NFLX
+# [X] NVDA
 # [ ] INTC
 
-TICKER = "TSLA" 
+TICKER = "INTC" 
 
 c.Search = f"\${TICKER}"
 
