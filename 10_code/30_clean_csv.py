@@ -3,7 +3,7 @@ import pandas as pd
 from rich.console import Console
 c = Console()
 
-root_path = "./"
+root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 keep_cols = ['id',
@@ -22,7 +22,7 @@ keep_cols = ['id',
              'cashtags',
              'link']
 
-
+#%%
 for ticker in tickers:
     c.print(f"[LOADING] ${ticker}...", style='white on blue')
     df = pd.read_csv(
@@ -71,9 +71,14 @@ for ticker in tickers:
         .pipe(fix_dtypes)
         .pipe(drop_dupes)
         .pipe(clean_object_cols)
+        .query("language == 'en'")
     )
 
     c.print(f"[SAVING] To parquet...", style='white on blue')
-    clean.to_parquet(root_path + f"20_outputs/parquets/{ticker}_tweets.parquet")
+    clean.to_parquet(root_path + f"00_source_data/parquets/{ticker}_tweets.parquet")
     c.print(f"[DONE]", style='white on green')
     del df
+
+
+#%%
+df.cashtags.str.split(", ").apply(len)
