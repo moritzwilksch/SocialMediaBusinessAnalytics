@@ -1,7 +1,9 @@
 {
-    "python.testing.promptToConfigure": false,
-    "python.testing.pytestEnabled": false,
+    "python.testing.pytestEnabled": true,
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
-    "jupyter.jupyterServerType": "local"
+    "jupyter.jupyterServerType": "local",
+    "python.testing.pytestArgs": [
+        "40_tests"
+    ]
 }

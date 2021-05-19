@@ -3,9 +3,8 @@ import pandas as pd
 from rich.console import Console
 c = Console()
 
-root_path = "../"
-tickers = [#"TSLA", 
-"AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
+root_path = "./"
+tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 keep_cols = ['id',
              'created_at',
@@ -55,9 +54,22 @@ for ticker in tickers:
         return data
 
 
+    def drop_dupes(data: pd.DataFrame) -> pd.DataFrame:
+        """Drop dupes."""
+        len_before = len(data)
+        data = data.drop_duplicates()
+        len_after = len(data)
+
+        c.print(f"[PROCESSING] Dropped {len_before - len_after} duplicates...", style='white on blue')
+
+        return data
+
+
+
     clean: pd.DataFrame = (
         df
         .pipe(fix_dtypes)
+        .pipe(drop_dupes)
         .pipe(clean_object_cols)
     )
 
