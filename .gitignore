@@ -142,3 +142,4 @@ dmypy.json
 00_source_data/TSLA_tweets.backup.csv
 
 20_outputs/parquets/
+20_outputs/financial_ts/
