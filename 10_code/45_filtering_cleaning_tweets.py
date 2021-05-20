@@ -58,6 +58,7 @@ for ticker in tickers:
         .pipe(filter_n_cashtags, max_n=4)
         .pipe(delete_urls)
         .pipe(mention_to_generic)
+        .reset_index(drop=True)
     )
 
     clean.to_parquet(root_path + f"20_outputs/clean_tweets/{ticker}_clean.parquet")

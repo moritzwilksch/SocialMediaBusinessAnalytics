@@ -57,7 +57,7 @@ for ticker in tickers:
     def drop_dupes(data: pd.DataFrame) -> pd.DataFrame:
         """Drop dupes."""
         len_before = len(data)
-        data = data.drop_duplicates()
+        data = data.drop_duplicates(subset='id')
         len_after = len(data)
 
         c.print(f"[PROCESSING] Dropped {len_before - len_after} duplicates...", style='white on blue')
@@ -78,7 +78,3 @@ for ticker in tickers:
     clean.to_parquet(root_path + f"00_source_data/parquets/{ticker}_tweets.parquet")
     c.print(f"[DONE]", style='white on green')
     del df
-
-
-#%%
-df.cashtags.str.split(", ").apply(len)
