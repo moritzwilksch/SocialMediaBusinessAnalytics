@@ -1,4 +1,5 @@
-#%%
+# %%
+from matplotlib.ticker import FuncFormatter
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -18,7 +19,7 @@ colors = {
     "INTC": '#0071c5'
 }
 
-#%%
+# %%
 results = dict()
 for ticker in tickers:
     print(f"{ticker}...")
@@ -29,7 +30,7 @@ for ticker in tickers:
     result = pd.merge(df, senti_df, how='left', on='id', validate="1:1")
     results[ticker] = result
 
-#%%
+# %%
 
 SMOOTHED = False
 
@@ -51,3 +52,63 @@ plt.tight_layout()
 
 plt.savefig(root_path + f"30_results/plots/sentiment_over_time{'_smoothed' if SMOOTHED else ''}.png", dpi=200, facecolor='white')
 plt.close()
+
+# %% [markdown]
+# # Sentiment vs. Return
+
+# %%
+
+for ticker in tickers:
+    x = pd.read_parquet(root_path + f"20_outputs/financial_ts/{ticker}_stock.parquet").dropna()['Close']
+    ret = x.pct_change().dropna()
+    df = pd.read_parquet(root_path + f"20_outputs/clean_tweets/{ticker}_clean.parquet")
+    senti = pd.read_parquet(root_path + f"20_outputs/vader_sentiments/{ticker}_sentiment.parquet")
+    result = pd.merge(df, senti, how='left', on='id', validate="1:1")
+
+    senti_ts = result.groupby(result.created_at.dt.date)['vader'].mean()
+
+    df = pd.merge(ret, senti_ts, left_index=True, right_index=True, how='left')
+
+    # sns.lmplot(data=df, x='vader', y='Close')
+
+    print(df.corr())
+
+    fig, ax = plt.subplots(figsize=(15, 8))
+    ax.plot(x/x[0]-1, color='blue', zorder=10)
+    ax.plot(senti_ts, color='0.8', zorder=0)
+    ax.set_title(ticker)
+    plt.show()
+
+# %% [markdown]
+# # NVDA only
+ # %%
+ticker = 'NVDA'
+x = pd.read_parquet(root_path + f"20_outputs/financial_ts/{ticker}_stock.parquet").dropna()['Close']
+ret = x.pct_change().dropna()
+df = pd.read_parquet(root_path + f"20_outputs/clean_tweets/{ticker}_clean.parquet")
+senti = pd.read_parquet(root_path + f"20_outputs/vader_sentiments/{ticker}_sentiment.parquet")
+result = pd.merge(df, senti, how='left', on='id', validate="1:1")
+
+senti_ts = result.groupby(result.created_at.dt.date)['vader'].mean()
+
+df = pd.merge(ret, senti_ts, left_index=True, right_index=True, how='left')
+
+
+
+# %%
+fg = sns.displot(senti['vader'], aspect=2, color='#77b900', kind='kde', fill=True)
+fg.set_xlabels("Sentiment Score")
+fg.ax.set_yticks([0, 1, 2, 3])
+
+
+
+
+
+# %%
+
+sns.set_context('talk')
+fg = sns.lmplot(data=df, x='vader', y='Close', aspect=1.5, scatter_kws=dict(color='#77b900', alpha=0.5), line_kws=dict(color='darkgreen'))
+fg.set_xlabels("Daily Average Sentiment Score")
+fg.set_ylabels("Stock Return")
+fg.ax.yaxis.set_major_formatter(FuncFormatter(lambda x, pos: f"{x*100:.0f}%"))
+fg.ax.text(0, 0.1, f"$\\rho = ${df.corr().loc['Close', 'vader']:.2f}")

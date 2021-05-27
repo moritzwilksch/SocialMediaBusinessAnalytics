@@ -33,7 +33,7 @@ if not LOAD_FROM_DISK:
     # Not found: BIIB, MSI, PKI,
     df = pd.DataFrame(results, columns=['ticker', 'n_tweets'])
 else:
-    df = pd.read_parquet(root_path + "20_outputs/pre_study_data.parquet")
+    df = pd.read_parquet(root_path + "20_outputs/pre_study/pre_study_data.parquet")
 # %%
 df.sort_values(by='n_tweets', ascending=False).head(15)
 
@@ -61,7 +61,7 @@ df.sort_values(by='n_tweets', ascending=False).head(15)
 plt.rcParams['font.sans-serif'] = ['Arial']
 
 total = 25
-used = 10
+used = 9
 
 fig, ax = plt.subplots(figsize=(10, 6))
 top_df = df.nlargest(total, 'n_tweets')
@@ -70,7 +70,7 @@ sns.barplot(
     y='ticker',
     x='n_tweets',
     ax=ax,
-    palette=['#00305e'] * used + ['0.8'] * (total - used),
+    palette=['#00305e'] * used + ['0.8'] * 4 + ['#00305e'] + ['0.8'] * (total - used),
     #ec='k'
     )
 ax.set(
@@ -80,10 +80,11 @@ ax.set(
     xticklabels=[f'{x/1000:.0f}{"k" if x > 0 else ""}' for x in range(0, 150_001, 25_000)],
 )
 
-for idx, tup in enumerate(top_df.iloc[:10].itertuples()):
-    ax.text(x=tup.n_tweets, y=idx+0.25, s=f"{tup.n_tweets/1000:.0f}k", color='w', ha='right')
+for idx, tup in enumerate(top_df.iloc[:14].itertuples()):
+    if idx not in (9, 10, 11, 12):
+        ax.text(x=tup.n_tweets, y=idx+0.25, s=f"{tup.n_tweets/1000:.0f}k", color='w', ha='right')
     #ax.text(x=0, y=idx+0.25, s=f"{tup.n_tweets/1000:.0f}k", color='w')
 
 
 sns.despine()
-plt.savefig(root_path + "20_outputs/pre_study.svg")
+plt.savefig(root_path + "30_results/plots/pre_study.svg")

@@ -71,7 +71,7 @@ for ticker in tickers:
         .pipe(fix_dtypes)
         .pipe(drop_dupes)
         .pipe(clean_object_cols)
-        .query("language == 'en'")
+        # .query("language == 'en'") # filtered later
     )
 
     c.print(f"[SAVING] To parquet...", style='white on blue')
