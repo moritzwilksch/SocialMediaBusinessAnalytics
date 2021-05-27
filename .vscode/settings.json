@@ -5,5 +5,6 @@
     "jupyter.jupyterServerType": "local",
     "python.testing.pytestArgs": [
         "40_tests"
-    ]
+    ],
+    "python.pythonPath": "/home/moritz/miniconda/bin/python"
 }
