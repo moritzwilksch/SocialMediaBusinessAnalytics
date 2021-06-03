@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from joblib import Parallel, delayed
+from helpers import load_and_join_for_modeling
 root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
@@ -12,49 +13,42 @@ tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", 
 
 #%%
 ticker = 'INTC'
-df = pd.read_parquet(root_path + f"20_outputs/clean_tweets/{ticker}_clean.parquet")
-senti_df = pd.read_parquet(root_path + f"20_outputs/vader_sentiments/{ticker}_sentiment.parquet")
-prices = pd.read_parquet(root_path + f"20_outputs/financial_ts/{ticker}_stock.parquet")
-result = pd.merge(df, senti_df, how='left', on='id', validate="1:1")
-
-#%%
-daily_senti_ts = senti_df.groupby(result.created_at.dt.date)['vader'].mean()
-returns = prices['Close'].pct_change()
-
-# %%
-df = (
-    pd.merge(returns, daily_senti_ts, left_index=True, right_index=True)
-    .rename({'Close': 'perf_1'}, axis=1)
-)
-    # # .ffill()
-
-    # )
-
-df = (
-    df
-    .assign(label=df['perf_1'].shift(-1))
-    .dropna()
-)
-
+df: pd.DataFrame = load_and_join_for_modeling(ticker)
 df
-#%%
-df.loc[df['perf_1']==0, 'perf_1'] = pd.NA
 
 #%%
-df = df.assign(perf_1=df['perf_1'].ffill())[~(df.label == 0)]
+from statsmodels.tsa.arima.model import ARIMA
+
+df = df.fillna(0)
+exog = "vader pct_pos pct_neg volume num_tweets".split()
+endog = "return"
+
+model = ARIMA(endog=df[endog], exog=df[exog], order=(1,0,0))
+res = model.fit(method='hannan_rissanen')
+print(res.summary())
+
+#%%
+model.predict(df[endog], df[exog])
+
+
+
 
 #%%
 from sklearn.linear_model import LinearRegression
 
 lr = LinearRegression(n_jobs=-1)
 
-X, y = df.drop('label', axis=1), df.label
+X, y = df.drop('return', axis=1).fillna(0), df['return'].fillna(0)
 lr.fit(X, y)
+preds = lr.predict(X)
+print((((preds > 0) & (y > 0)) | ((preds < 0) & (y < 0))).mean())
+
+#%%
 y = y.copy()
 res = []
 
 def runsim():
-    y = np.random.choice(df.label.copy(), replace=False, size=len(df))
+    y = np.random.choice(df["return"].fillna(0).copy(), replace=False, size=len(df))
     lr.fit(X, y)
     preds = lr.predict(X)
     return (((preds > 0) & (y > 0)) | ((preds < 0) & (y < 0))).mean()
@@ -63,4 +57,4 @@ res = Parallel(n_jobs=-1, prefer='processes')(delayed(runsim)() for _ in range(1
 
 #%%
 sns.histplot(res)
-(np.array(res) > 0.5549828178694158).mean()
+(np.array(res) > 0.3967).mean()
