@@ -16,7 +16,7 @@ def shape_decorator(fn: callable) -> callable:
         print(f" ---> Ouput shape: {result.shape}")
 
         # logging
-        with open(f"./logs/{ticker}_filtering.log", 'a') as f:
+        with open(f"./filtering_logs/{ticker}.log", 'a') as f:
             f.write(f"{'[' + fn.__name__ + ']':25} Input shape: {args[0].shape}" + f" ---> Ouput shape: {result.shape}\n")
         return result
     return wrapper
@@ -49,7 +49,7 @@ def mention_to_generic(data: pd.DataFrame) -> pd.DataFrame:
 for ticker in tickers:
     print(f"{ticker}...")
     df = pd.read_parquet(root_path + f"00_source_data/parquets/{ticker}_tweets.parquet")
-    with open(f"./logs/{ticker}_filtering.log", 'w') as f:
+    with open(f"./filtering_logs/{ticker}.log", 'w') as f:
         f.write("=" * 10 + ticker + "=" * 10 + "\n")
 
     clean: pd.DataFrame = (
