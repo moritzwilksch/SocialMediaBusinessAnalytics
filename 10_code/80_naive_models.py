@@ -64,3 +64,4 @@ res_df = res_df.set_index('ticker', drop=True)
     .to_csv(root_path + "30_results/naive_baseline_benchmarks.csv", sep=";")
 )
 #%%
+print(res_df.round({'mae': 5, 'zmae': 3, 'accuracy': 3}).to_markdown())
