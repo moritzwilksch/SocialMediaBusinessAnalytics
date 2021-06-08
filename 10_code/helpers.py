@@ -1,9 +1,11 @@
 #%%
 from typing import Tuple
 import pandas as pd
+from sklearn.metrics import accuracy_score, mean_absolute_error
+from rich.console import Console
 root_path = "../"
 VADER_THRESH = 0.05
-
+c = Console(highlight=False)
 
 def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
     """
@@ -101,3 +103,15 @@ def train_val_test_split(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame
     return train.drop('label', axis=1), train['label'], val.drop('label', axis=1), val['label'], test.drop('label', axis=1), test['label']
 
 
+
+def eval_regression(ytrue, ypred):
+    binary_ytrue = (ytrue > 0).astype('int8')
+    binary_ypred = (ypred > 0).astype('int8')
+
+    c.print(f"Accuracy = {accuracy_score(binary_ytrue, binary_ypred):.3f}", style="white on blue")
+    c.print(f"MAE = {mean_absolute_error(ytrue, ypred):.4f}", style="white on blue")
+
+
+
+
+#%%
