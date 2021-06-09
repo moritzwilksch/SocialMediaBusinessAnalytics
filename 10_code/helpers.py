@@ -104,12 +104,18 @@ def train_val_test_split(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame
 
 
 
-def eval_regression(ytrue, ypred):
+def eval_regression(ytrue, ypred, print=True) -> Tuple[int, int]:
+    """ Returns mae, acc given ytrue & ypred. """
     binary_ytrue = (ytrue > 0).astype('int8')
     binary_ypred = (ypred > 0).astype('int8')
 
-    c.print(f"Accuracy = {accuracy_score(binary_ytrue, binary_ypred):.3f}", style="white on blue")
-    c.print(f"MAE = {mean_absolute_error(ytrue, ypred):.4f}", style="white on blue")
+    acc = accuracy_score(binary_ytrue, binary_ypred)
+    mae = mean_absolute_error(ytrue, ypred)
+
+    c.print(f"Accuracy = {acc:.3f}", style="white on blue")
+    c.print(f"MAE = {mae:.4f}", style="white on blue")
+
+    return mae, acc
 
 
 
