@@ -1,12 +1,8 @@
 # %%
 import warnings
-from sklearn.linear_model import LogisticRegression
 import statsmodels.api as sm
 from statsmodels.tsa.arima.model import ARIMA
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
 import itertools
 from helpers import load_and_join_for_modeling, train_val_test_split, eval_regression
 from rich.console import Console
