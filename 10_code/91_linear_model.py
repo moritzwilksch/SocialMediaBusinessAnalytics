@@ -1,5 +1,4 @@
 # %%
-import warnings
 import statsmodels.api as sm
 from statsmodels.tsa.arima.model import ARIMA
 import pandas as pd
