@@ -55,4 +55,4 @@ for ticker in tickers:
     c.print(f"[INFO] Done with {ticker}!", style="white on green")
 
 #%%
-pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + "30_results/VARX_paramtuning.csv", sep=";")
+# pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + "30_results/VARX_paramtuning.csv", sep=";")
