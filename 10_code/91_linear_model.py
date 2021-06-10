@@ -1,8 +1,6 @@
 # %%
 import statsmodels.api as sm
-from statsmodels.tsa.arima.model import ARIMA
 import pandas as pd
-import itertools
 from helpers import load_and_join_for_modeling, train_val_test_split, eval_regression
 from rich.console import Console
 c = Console(highlight=False)
@@ -10,20 +8,11 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 
-# %%
-# df = df.fillna(0)
-# exog = "vader pct_pos pct_neg volume num_tweets".split()
-# endog = "label"
-
-# model = ARIMA(endog=df.loc[:"2021-02-28", endog], exog=df.loc[:"2021-02-28", exog], order=(1, 0, 1))
-# res = model.fit(method='hannan_rissanen')
-# print(res.summary())
-
-
 #%%
 exog = "num_tweets".split()
 endog = "label vader".split()
-orders_til_5 = list(itertools.product(range(1, 6), range(1, 6)))
+# orders_til_5 = list(itertools.product(range(1, 6), range(1, 6)))
+orders_to_test = list(zip(range(1, 9), [0] * 8))
 results = []
 
 for ticker in tickers:
@@ -34,10 +23,10 @@ for ticker in tickers:
     val = pd.concat((xval, yval), axis=1)
     # test = pd.concat((xtest, ytest), axis=1)
 
-    for order in orders_til_5:
+    for order in orders_to_test:
         c.print(f"[INFO] Fitting order = {order}...")
         model = sm.tsa.VARMAX(train[endog], exog=train[exog], order=order)
-        res = model.fit()
+        res = model.fit(maxiter=250)
         if not res.mle_retvals.get('converged'):
             c.print("[ERROR] MLE not converged!", style="white on red")
             acc = mae = -1
@@ -50,4 +39,4 @@ for ticker in tickers:
     c.print(f"[INFO] Done with {ticker}!", style="white on green")
 
 #%%
-# pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + "30_results/VARX_paramtuning.csv", sep=";")
+pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + "30_results/VARX_paramtuning.csv", sep=";")
