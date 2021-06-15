@@ -11,7 +11,7 @@ tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", 
 
 results = []
 
-with open(f"./benchmarks/naive_baseline.log", 'w') as f:
+with open(root_path + f"20_outputs/benchmarks/naive_baseline.log", 'w') as f:
     f.write("")
 
 for ticker in tickers:
@@ -39,7 +39,7 @@ for ticker in tickers:
     acc = accuracy_score((ytest > 0), preds)
     print(f"Accuracy = {acc:.4f}")
 
-    with open(f"./benchmarks/naive_baseline.log", 'a') as f:
+    with open(root_path + f"20_outputs/benchmarks/naive_baseline.log", 'a') as f:
         f.write(f"==== {ticker} ====\n")
         f.write(f"MAE = {mae:.5f}\n")
         f.write(f"z std. MAE = {z_mae:.3f}\n")

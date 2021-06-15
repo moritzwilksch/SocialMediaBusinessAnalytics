@@ -59,8 +59,9 @@ df.sort_values(by='n_tweets', ascending=False).head(15)
 
 # %%
 plt.rcParams['font.sans-serif'] = ['Arial']
+plt.rcParams['font.size'] = 16
 
-total = 25
+total = 15
 used = 9
 
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -71,20 +72,23 @@ sns.barplot(
     x='n_tweets',
     ax=ax,
     palette=['#00305e'] * used + ['0.8'] * 4 + ['#00305e'] + ['0.8'] * (total - used),
-    #ec='k'
+    ec='k'
     )
 ax.set(
-    xlabel='Number of tweets',
     ylabel='',
     xticks=range(0, 150_001, 25_000),
     xticklabels=[f'{x/1000:.0f}{"k" if x > 0 else ""}' for x in range(0, 150_001, 25_000)],
 )
 
+ax.set_xlabel("Number of Tweets", weight='bold')
+
 for idx, tup in enumerate(top_df.iloc[:14].itertuples()):
     if idx not in (9, 10, 11, 12):
-        ax.text(x=tup.n_tweets, y=idx+0.25, s=f"{tup.n_tweets/1000:.0f}k", color='w', ha='right')
+        ax.text(x=tup.n_tweets, y=idx+0.25, s=f"{tup.n_tweets/1000:.0f}k", color='w', ha='right', size=14)
     #ax.text(x=0, y=idx+0.25, s=f"{tup.n_tweets/1000:.0f}k", color='w')
 
 
 sns.despine()
 plt.savefig(root_path + "30_results/plots/pre_study.svg")
+
+
