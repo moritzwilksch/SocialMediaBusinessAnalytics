@@ -1,11 +1,11 @@
 #%%
 from typing import Tuple
 import pandas as pd
-from sklearn.metrics import accuracy_score, mean_absolute_error
 from rich.console import Console
 root_path = "../"
 VADER_THRESH = 0.05
 c = Console(highlight=False)
+
 
 def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
     """
@@ -50,7 +50,6 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
     )
     pct_neg.index = pd.DatetimeIndex(pct_neg.index)
 
-
     # produce final df through concat
     final: pd.DataFrame = pd.concat(
         [
@@ -69,7 +68,6 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
     # backfill prediction label only
     final['label'] = final['label'].bfill()
 
-
     # Test for join errors...
     col_obj_mapping = {
         'vader': daily_senti_ts,
@@ -80,14 +78,14 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
     }
 
     test_dates = ['2019-06-30', '2019-01-18',
-                '2019-03-07', '2019-06-16',
-                '2019-08-30', '2019-12-09',
-                '2020-07-20', '2019-12-29',
-                '2020-10-06', '2019-05-05']
+                  '2019-03-07', '2019-06-16',
+                  '2019-08-30', '2019-12-09',
+                  '2020-07-20', '2019-12-29',
+                  '2020-10-06', '2019-05-05']
 
     for date in test_dates:
         assert all([final.loc[date][col] == col_obj_mapping.get(col).loc[date] for col in ['vader', 'pct_pos', 'pct_neg', 'volume', 'return']])
-    
+
     return final
 
 
@@ -101,23 +99,3 @@ def train_val_test_split(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame
     test = data.loc[pd.to_datetime(VAL_TEST_CUTOFF) + pd.DateOffset(1):]
 
     return train.drop('label', axis=1), train['label'], val.drop('label', axis=1), val['label'], test.drop('label', axis=1), test['label']
-
-
-
-def eval_regression(ytrue, ypred, print=True) -> Tuple[int, int]:
-    """ Returns mae, acc given ytrue & ypred. """
-    binary_ytrue = (ytrue > 0).astype('int8')
-    binary_ypred = (ypred > 0).astype('int8')
-
-    acc = accuracy_score(binary_ytrue, binary_ypred)
-    mae = mean_absolute_error(ytrue, ypred)
-
-    c.print(f"Accuracy = {acc:.3f}", style="white on blue")
-    c.print(f"MAE = {mae:.4f}", style="white on blue")
-
-    return mae, acc
-
-
-
-
-#%%

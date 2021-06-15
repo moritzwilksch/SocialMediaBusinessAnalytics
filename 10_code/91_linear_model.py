@@ -1,7 +1,8 @@
 # %%
 import statsmodels.api as sm
 import pandas as pd
-from helpers import load_and_join_for_modeling, train_val_test_split, eval_regression
+from helpers.preprocessing import load_and_join_for_modeling, train_val_test_split
+from helpers.modeleval import eval_regression
 from rich.console import Console
 c = Console(highlight=False)
 root_path = "../"

@@ -4,7 +4,7 @@ from statsmodels.graphics.tsaplots import plot_acf
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from helpers import load_and_join_for_modeling
+from helpers.preprocessing import load_and_join_for_modeling
 from rich.console import Console
 c = Console(highlight=False)
 root_path = "../"

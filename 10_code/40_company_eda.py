@@ -77,7 +77,7 @@ for ticker in tickers[:1]:
     df = pd.read_parquet(root_path + f"00_source_data/parquets/{ticker}_tweets.parquet")
     df = df.loc[~(df.cashtags.isna())]
     series.append(df.cashtags.str.split(", ").apply(len))
-    # del df
+    del df
 
 # %%
 fig, axes = plt.subplots(5, 2, figsize=(25, 20), sharex=True)

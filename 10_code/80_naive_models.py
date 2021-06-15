@@ -1,10 +1,8 @@
 # %%
 from sklearn.metrics import mean_absolute_error, accuracy_score
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
-from helpers import load_and_join_for_modeling, train_val_test_split
+from helpers.preprocessing import load_and_join_for_modeling, train_val_test_split
 root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
