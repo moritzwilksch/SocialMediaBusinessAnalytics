@@ -23,7 +23,6 @@ for ticker in tickers:
     train = pd.concat((xtrain, ytrain), axis=1)
     val = pd.concat((xval, yval), axis=1)
     # test = pd.concat((xtest, ytest), axis=1)
-
     for order in orders_to_test:
         c.print(f"[INFO] Fitting order = {order}...")
         model = sm.tsa.VARMAX(train[endog], exog=train[exog], order=order)

@@ -8,8 +8,8 @@ c = Console(highlight=False)
 
 def eval_regression(ytrue, ypred, print=True) -> Tuple[int, int]:
     """ Returns mae, acc given ytrue & ypred. """
-    binary_ytrue = (ytrue > 0).astype('int8')
-    binary_ypred = (ypred > 0).astype('int8')
+    binary_ytrue = (ytrue > 0).astype('int8')  # use ">" because a buy signal should only be generated for positive returns
+    binary_ypred = (ypred > 0).astype('int8')  # use ">" because a buy signal should only be generated for positive returns
 
     acc = accuracy_score(binary_ytrue, binary_ypred)
     mae = mean_absolute_error(ytrue, ypred)
@@ -20,3 +20,12 @@ def eval_regression(ytrue, ypred, print=True) -> Tuple[int, int]:
     return mae, acc
 
 #%%
+
+
+def eval_classification(ytrue, ypred, print=True) -> float:
+    """ Returns acc given binary ytrue & ypred. """
+    acc = accuracy_score(ytrue, ypred)
+
+    c.print(f"Accuracy = {acc:.3f}", style="white on blue")
+
+    return acc
