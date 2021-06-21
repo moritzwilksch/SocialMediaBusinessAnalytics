@@ -96,8 +96,12 @@ else:
 
 #%%
 rev = {v: k for k, v in cv.vocabulary_.items()}
-for i in model.coef_[1].argsort()[-20:]:
-    print(rev[i])
+for i, w in enumerate(['NEGATIVE', 'NEUTRAL', 'POSITIVE']):
+    print(f"======={'='*12}=======")
+    print(f"======= {w:^10} =======")
+    print(f"======={'='*12}=======")
+    for i in model.coef_[i].argsort()[-20:]:
+        print("- " + rev[i])
 
 # %%
 if False:
