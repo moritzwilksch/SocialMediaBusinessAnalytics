@@ -1,4 +1,5 @@
 # %%
+from typing import Literal
 from typing import Tuple
 import pandas as pd
 import numpy as np
@@ -12,16 +13,19 @@ c = Console(highlight=False)
 ps = nltk.stem.PorterStemmer()
 
 
-def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
+def load_and_join_for_modeling(ticker: str, version: Literal['vader', 'ml_sentiment']) -> pd.DataFrame:
     """
     For `ticker`:
     - loads tweet & senti data
     - calculates features
     - joins it
     """
+    if version not in ('vader', 'ml_sentiment'):
+        raise ValueError("`version` must be either 'vader' or 'ml_sentiment'")
+
     # loading
     tweet_df = pd.read_parquet(root_path + f"20_outputs/clean_tweets/{ticker}_clean.parquet")
-    senti_df = pd.read_parquet(root_path + f"20_outputs/vader_sentiments/{ticker}_sentiment.parquet")
+    senti_df = pd.read_parquet(root_path + f"20_outputs/{'vader_sentiments' if version == 'vader' else 'ml_sentiments'}/{ticker}_sentiment.parquet")
 
     prices = pd.read_parquet(root_path + f"20_outputs/financial_ts/{ticker}_stock.parquet")
     prices.index = pd.DatetimeIndex(prices.index)
@@ -35,7 +39,7 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
         """ Calculates mean weighted by impressions. """
         return np.average(x, weights=result.loc[x.index, "impressions"])
 
-    daily_senti_ts = senti_df.groupby(result.created_at.dt.date).agg(vader=('vader', weighted_mean))
+    daily_senti_ts = senti_df.groupby(result.created_at.dt.date).agg({version: weighted_mean})
     # daily_senti_ts = senti_df.groupby(result.created_at.dt.date)['vader'].mean()  # OLD
     daily_senti_ts.index = pd.DatetimeIndex(daily_senti_ts.index)
 
@@ -46,7 +50,7 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
     # calculation of metrics
     pct_pos = (
         result
-        .assign(is_pos=result.vader > VADER_THRESH)
+        .assign(is_pos=result.vader > VADER_THRESH if version == 'vader' else result.ml_sentiment > 0)
         .groupby(result.created_at.dt.date)
         ['is_pos']
         .mean()
@@ -55,7 +59,7 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
 
     pct_neg = (
         result
-        .assign(is_neg=result.vader < -VADER_THRESH)
+        .assign(is_neg=result.vader < -VADER_THRESH if version == 'vader' else result.ml_sentiment < 0)
         .groupby(result.created_at.dt.date)
         ['is_neg']
         .mean()
@@ -131,6 +135,7 @@ def replace_with_generics(data: pd.DataFrame) -> pd.DataFrame:
 # %%
 if __name__ == "__main__":
     root_path = "../../"
-    df = load_and_join_for_modeling('INTC')
+    df = load_and_join_for_modeling('INTC', 'ml_sentiment')
+    df
 
 # %%

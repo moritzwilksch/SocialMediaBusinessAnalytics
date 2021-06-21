@@ -144,5 +144,6 @@ dmypy.json
 00_source_data/parquets/
 20_outputs/financial_ts/
 20_outputs/vader_sentiments/
+20_outputs/ml_sentiments/
 20_outputs/clean_tweets/
 

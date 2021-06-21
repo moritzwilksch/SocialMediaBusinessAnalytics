@@ -8,12 +8,10 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
 import pandas as pd
-from rich.console import Console
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from helpers.preprocessing import prepare_tweet_for_sentimodel, replace_with_generics
 vader = SentimentIntensityAnalyzer()
 
-c = Console(highlight=False)
 root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
@@ -90,7 +88,7 @@ if RETRAIN:
     lr = LogisticRegression(C=study.best_params['c'], max_iter=150)
     lr.fit(bow, df.sentiment)
 else:
-    cv: CountVectorizer = joblib.load(root_path + "20_outputs/count_vectorizer.joblib")
+    cv: TfidfVectorizer = joblib.load(root_path + "20_outputs/count_vectorizer.joblib")
     model: LogisticRegression = joblib.load(root_path + "20_outputs/sentiment_model.joblib")
 
 
@@ -126,22 +124,3 @@ if False:
     joblib.dump(cv, root_path + "20_outputs/count_vectorizer.joblib")
     joblib.dump(lr, root_path + "20_outputs/sentiment_model.joblib")
 
-
-# %%
-ticker = 'INTC'
-df = pd.read_parquet(root_path + f"20_outputs/clean_tweets/{ticker}_clean.parquet")
-
-df = replace_with_generics(df)
-# df.tweet = df.tweet.apply(prepare_tweet_for_sentimodel)
-df.tweet = joblib.Parallel(n_jobs=-1)(joblib.delayed(prepare_tweet_for_sentimodel)(tweet) for tweet in df.tweet)
-bow = cv.transform(df.tweet)
-
-# %%
-preds = model.predict(bow)
-df['preds'] = preds
-for row in df.sample(100).itertuples():
-    print(f"[{row.preds}]: {row.tweet}")
-    print("-"*80)
-
-
-# %%

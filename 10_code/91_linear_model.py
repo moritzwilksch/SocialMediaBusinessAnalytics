@@ -10,14 +10,15 @@ tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", 
 
 
 #%%
+SENTI = "ml_sentiment"
 exog = "num_tweets".split()
-endog = "label vader".split()
+endog = f"label {SENTI}".split()
 # orders_til_5 = list(itertools.product(range(1, 6), range(1, 6)))
 orders_to_test = list(zip(range(1, 9), [0] * 8))
 results = []
 
 for ticker in tickers:
-    df: pd.DataFrame = load_and_join_for_modeling(ticker)
+    df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
     xtrain, ytrain, xval, yval, xtest, ytest = train_val_test_split(df)
 
     train = pd.concat((xtrain, ytrain), axis=1)
@@ -39,4 +40,4 @@ for ticker in tickers:
     c.print(f"[INFO] Done with {ticker}!", style="white on green")
 
 #%%
-pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + "30_results/VARX_paramtuning.csv", sep=";")
+pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + f"30_results/VARX_paramtuning_{SENTI}.csv", sep=";")

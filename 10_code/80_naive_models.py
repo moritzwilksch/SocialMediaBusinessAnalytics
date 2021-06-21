@@ -14,7 +14,7 @@ with open(root_path + f"20_outputs/benchmarks/naive_baseline.log", 'w') as f:
 
 for ticker in tickers:
     print(f"==== {ticker} ====")
-    df: pd.DataFrame = load_and_join_for_modeling(ticker).dropna(subset=['label'])  # drop last 2
+    df: pd.DataFrame = load_and_join_for_modeling(ticker, 'vader').dropna(subset=['label'])  # drop last 2
     xtrain, ytrain, xval, yval, xtest, ytest = train_val_test_split(df)
 
     # mean only
