@@ -1,10 +1,14 @@
-#%%
+# %%
 from typing import Tuple
 import pandas as pd
+from functools import partial
+import numpy as np
 from rich.console import Console
 root_path = "../"
 VADER_THRESH = 0.05
 c = Console(highlight=False)
+
+
 
 
 def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
@@ -23,8 +27,15 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
 
     result = pd.merge(tweet_df, senti_df, how='left', on='id', validate="1:1")
 
+    result = result.assign(impressions=result.retweets_count + result.likes_count + 1)  # base value 1 to not loose tweets without likes
+
     # grouping daily
-    daily_senti_ts = senti_df.groupby(result.created_at.dt.date)['vader'].mean()
+    def weighted_mean(x):
+        """ Calculates mean weighted by impressions. """
+        return np.average(x, weights=result.loc[x.index, "impressions"])
+
+    daily_senti_ts = senti_df.groupby(result.created_at.dt.date).agg(vader=('vader', weighted_mean))
+    # daily_senti_ts = senti_df.groupby(result.created_at.dt.date)['vader'].mean()  # OLD
     daily_senti_ts.index = pd.DatetimeIndex(daily_senti_ts.index)
 
     # returns
@@ -70,7 +81,7 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
 
     # Test for join errors...
     col_obj_mapping = {
-        'vader': daily_senti_ts,
+        # 'vader': daily_senti_ts,  # Test for UNweighted equality
         'pct_pos': pct_pos,
         'pct_neg': pct_neg,
         'volume': prices['Volume'].fillna(0),
@@ -84,7 +95,7 @@ def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
                   '2020-10-06', '2019-05-05']
 
     for date in test_dates:
-        assert all([final.loc[date][col] == col_obj_mapping.get(col).loc[date] for col in ['vader', 'pct_pos', 'pct_neg', 'volume', 'return']])
+        assert all([final.loc[date][col] == col_obj_mapping.get(col).loc[date] for col in ['pct_pos', 'pct_neg', 'volume', 'return']])
 
     return final
 
@@ -99,3 +110,11 @@ def train_val_test_split(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame
     test = data.loc[pd.to_datetime(VAL_TEST_CUTOFF) + pd.DateOffset(1):]
 
     return train.drop('label', axis=1), train['label'], val.drop('label', axis=1), val['label'], test.drop('label', axis=1), test['label']
+
+
+# %%
+if __name__ == "__main__":
+    root_path = "../../"
+    df = load_and_join_for_modeling('INTC')
+
+# %%
