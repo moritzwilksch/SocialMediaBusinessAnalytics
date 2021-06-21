@@ -1,14 +1,15 @@
 # %%
 from typing import Tuple
 import pandas as pd
-from functools import partial
 import numpy as np
 from rich.console import Console
+import nltk
+import string
+
 root_path = "../"
 VADER_THRESH = 0.05
 c = Console(highlight=False)
-
-
+ps = nltk.stem.PorterStemmer()
 
 
 def load_and_join_for_modeling(ticker: str) -> pd.DataFrame:
@@ -110,6 +111,21 @@ def train_val_test_split(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame
     test = data.loc[pd.to_datetime(VAL_TEST_CUTOFF) + pd.DateOffset(1):]
 
     return train.drop('label', axis=1), train['label'], val.drop('label', axis=1), val['label'], test.drop('label', axis=1), test['label']
+
+
+
+
+def prepare_tweet_for_sentimodel(tweet: str) -> str:
+    """Per word: to lower, stem, remove punctuation (keep emojies) """
+    return " ".join([ps.stem(x.lower().strip(string.punctuation + """”'’""")) for x in tweet.split(' ')])
+
+
+def replace_with_generics(data: pd.DataFrame) -> pd.DataFrame:
+    data = data.copy()
+    data.tweet = data.tweet.str.replace("\d+", "NUM", regex=True)
+    data.tweet = data.tweet.str.replace("\$\w+", "TICKER", regex=True)
+    data.tweet = data.tweet.str.replace("#\w+", "HASHTAG", regex=True)
+    return data
 
 
 # %%

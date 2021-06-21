@@ -1,18 +1,16 @@
 # %%
 import optuna
-import nltk
 import joblib
-import string
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.model_selection import RandomizedSearchCV, GridSearchCV, cross_val_score
+from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-import scipy.stats as stats
 import numpy as np
 import pandas as pd
 from rich.console import Console
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from helpers.preprocessing import prepare_tweet_for_sentimodel, replace_with_generics
 vader = SentimentIntensityAnalyzer()
 
 c = Console(highlight=False)
@@ -30,14 +28,13 @@ def get_vader_senti(tweet):
     return vader.polarity_scores(tweet).get('compound')
 
 
-df.tweet = df.tweet.str.replace("\d+", "NUM", regex=True)
-df.tweet = df.tweet.str.replace("\$\w+", "TICKER", regex=True)
-df.tweet = df.tweet.str.replace("#\w+", "HASHTAG", regex=True)
+# df.tweet = df.tweet.str.replace("\d+", "NUM", regex=True)
+# df.tweet = df.tweet.str.replace("\$\w+", "TICKER", regex=True)
+# df.tweet = df.tweet.str.replace("#\w+", "HASHTAG", regex=True)
 
+df = replace_with_generics(df)  # replace numbers, hashtags, tickers
 
 df = df.assign(vader=df.tweet.apply(get_vader_senti))
-
-# %%
 
 # %%
 df = df.assign(vader_bin=np.select(
@@ -55,50 +52,52 @@ df = df.assign(vader_bin=np.select(
 # %%
 pd.crosstab(df.sentiment, df.vader_bin)
 pd.crosstab(df.sentiment, df.vader_bin).to_csv(root_path + "30_results/vader_acc.csv", sep=";")
-
-# %%
+#%%
 print(f"VADER accuracy = {(df.vader_bin == df.sentiment).mean():.3f}")
+
+######################################################################
 # %%
-ps = nltk.stem.PorterStemmer()
-
-
-def prep(tweet):
-    """Per word: to lower, stem, remove punctuation (keep emojies) """
-    return " ".join([ps.stem(x.lower().strip(string.punctuation + """”'’""")) for x in tweet.split(' ')])
-
-df.tweet = df.tweet.apply(prep)
+df.tweet = df.tweet.apply(prepare_tweet_for_sentimodel)
 
 # cv = CountVectorizer(token_pattern=r'[^\s]+')
 cv = TfidfVectorizer(token_pattern=r'[^\s]+')
 bow = cv.fit_transform(df.tweet)
 
 # Check vocabulary:
-with open(root_path + "20_outputs/cv_vocab.txt", 'w') as f:
-    for v in cv.vocabulary_.keys():
-        f.writelines(v + "\n")
+# with open(root_path + "20_outputs/cv_vocab.txt", 'w') as f:
+#     for v in cv.vocabulary_.keys():
+#         f.writelines(v + "\n")
 
 # %%
+RETRAIN = False
+if RETRAIN:
+    def objective_lr(trial):
+        c = trial.suggest_float('c', 1e-5, 10, log=True)
+        cv_scores = cross_val_score(LogisticRegression(C=c), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
+        return cv_scores.mean()
 
 
-def objective_lr(trial):
-    c = trial.suggest_float('c', 1e-5, 10, log=True)
-    cv_scores = cross_val_score(LogisticRegression(C=c), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
-    return cv_scores.mean()
+    def objective_nb(trial):
+        alpha = trial.suggest_float('alpha', 1e-5, 10, log=True)
+        cv_scores = cross_val_score(MultinomialNB(alpha=alpha), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
+        return cv_scores.mean()
 
 
-def objective_nb(trial):
-    alpha = trial.suggest_float('alpha', 1e-5, 10, log=True)
-    cv_scores = cross_val_score(MultinomialNB(alpha=alpha), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
-    return cv_scores.mean()
+    study = optuna.create_study(direction='maximize')
+    study.optimize(objective_lr, n_trials=100)
 
 
-study = optuna.create_study(direction='maximize')
-study.optimize(objective_lr, n_trials=100)
+    lr = LogisticRegression(C=study.best_params['c'], max_iter=150)
+    lr.fit(bow, df.sentiment)
+else:
+    cv: CountVectorizer = joblib.load(root_path + "20_outputs/count_vectorizer.joblib")
+    model: LogisticRegression = joblib.load(root_path + "20_outputs/sentiment_model.joblib")
 
-# %%
-lr = LogisticRegression(C=study.best_params['c'], max_iter=150)
-lr.fit(bow, df.sentiment)
 
+#%%
+rev = {v: k for k, v in cv.vocabulary_.items()}
+for i in model.coef_[1].argsort()[-20:]:
+    print(rev[i])
 
 # %%
 if False:
@@ -121,21 +120,20 @@ if False:
 # %%
 if False:
     joblib.dump(cv, root_path + "20_outputs/count_vectorizer.joblib")
-    joblib.dump(rs_rf, root_path + "20_outputs/sentiment_model.joblib")
+    joblib.dump(lr, root_path + "20_outputs/sentiment_model.joblib")
 
-
-# %%
-
-cv: CountVectorizer = joblib.load(root_path + "20_outputs/count_vectorizer.joblib")
-model: GridSearchCV = joblib.load(root_path + "20_outputs/sentiment_model.joblib")
 
 # %%
 ticker = 'INTC'
 df = pd.read_parquet(root_path + f"20_outputs/clean_tweets/{ticker}_clean.parquet")
 
+df = replace_with_generics(df)
+# df.tweet = df.tweet.apply(prepare_tweet_for_sentimodel)
+df.tweet = joblib.Parallel(n_jobs=-1)(joblib.delayed(prepare_tweet_for_sentimodel)(tweet) for tweet in df.tweet)
+bow = cv.transform(df.tweet)
 
 # %%
-preds = lr.predict(bow)
+preds = model.predict(bow)
 df['preds'] = preds
 for row in df.sample(100).itertuples():
     print(f"[{row.preds}]: {row.tweet}")
@@ -143,6 +141,3 @@ for row in df.sample(100).itertuples():
 
 
 # %%
-rev = {v: k for k, v in cv.vocabulary_.items()}
-for i in lr.coef_[1].argsort()[-20:]:
-    print(rev[i])
