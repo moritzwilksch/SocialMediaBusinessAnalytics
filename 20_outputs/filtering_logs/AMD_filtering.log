@@ -1,0 +1,3 @@
+==========AMD==========
+[filter_language]         Input shape: (298069, 13) ---> Ouput shape: (259470, 13)
+[filter_n_cashtags]       Input shape: (259470, 13) ---> Ouput shape: (136046, 13)

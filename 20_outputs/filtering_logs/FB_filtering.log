@@ -1,0 +1,3 @@
+==========FB==========
+[filter_language]         Input shape: (508272, 13) ---> Ouput shape: (453542, 13)
+[filter_n_cashtags]       Input shape: (453542, 13) ---> Ouput shape: (236308, 13)

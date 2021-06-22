@@ -1,0 +1,90 @@
+
+=== ADF Test for TSLA ===
+ml_sentiment: p = 0.0001
+pct_pos:     p = 0.1729
+pct_neg:     p = 0.073
+volume:      p = 0.059
+num_tweets:  p = 0.1755
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for AAPL ===
+ml_sentiment: p = 0.0688
+pct_pos:     p = 0.3907
+pct_neg:     p = 0.0006
+volume:      p = 0.0158
+num_tweets:  p = 0.0656
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for AMZN ===
+ml_sentiment: p = 0.0
+pct_pos:     p = 0.0026
+pct_neg:     p = 0.0104
+volume:      p = 0.0022
+num_tweets:  p = 0.0183
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for FB ===
+ml_sentiment: p = 0.0
+pct_pos:     p = 0.2618
+pct_neg:     p = 0.0625
+volume:      p = 0.0009
+num_tweets:  p = 0.0007
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for MSFT ===
+ml_sentiment: p = 0.0
+pct_pos:     p = 0.0
+pct_neg:     p = 0.0712
+volume:      p = 0.0345
+num_tweets:  p = 0.0291
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for TWTR ===
+ml_sentiment: p = 0.0
+pct_pos:     p = 0.0232
+pct_neg:     p = 0.0
+volume:      p = 0.0
+num_tweets:  p = 0.0
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for AMD ===
+ml_sentiment: p = 0.0
+pct_pos:     p = 0.0759
+pct_neg:     p = 0.0
+volume:      p = 0.0004
+num_tweets:  p = 0.0056
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for NFLX ===
+ml_sentiment: p = 0.0
+pct_pos:     p = 0.0
+pct_neg:     p = 0.031
+volume:      p = 0.0
+num_tweets:  p = 0.0
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for NVDA ===
+ml_sentiment: p = 0.0
+pct_pos:     p = 0.0022
+pct_neg:     p = 0.0019
+volume:      p = 0.0178
+num_tweets:  p = 0.0022
+return:      p = 0.0
+label:       p = 0.0
+
+=== ADF Test for INTC ===
+ml_sentiment: p = 0.0
+pct_pos:     p = 0.0
+pct_neg:     p = 0.0
+volume:      p = 0.0001
+num_tweets:  p = 0.0
+return:      p = 0.0
+label:       p = 0.0

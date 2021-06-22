@@ -1,0 +1,3 @@
+==========TWTR==========
+[filter_language]         Input shape: (246971, 13) ---> Ouput shape: (230921, 13)
+[filter_n_cashtags]       Input shape: (230921, 13) ---> Ouput shape: (148588, 13)

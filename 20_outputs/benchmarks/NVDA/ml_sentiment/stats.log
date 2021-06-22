@@ -1,0 +1,13 @@
+rf
+{'max_depth': 2, 'min_samples_leaf': 18}
+VALIDATION Accuracy = 0.6406
+TEST Accuracy = 0.6094
+              precision    recall  f1-score   support
+
+       False       0.80      0.08      0.14        53
+        True       0.60      0.99      0.75        75
+
+    accuracy                           0.61       128
+   macro avg       0.70      0.53      0.44       128
+weighted avg       0.68      0.61      0.50       128
+

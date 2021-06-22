@@ -1,0 +1,3 @@
+==========AAPL==========
+[filter_language]         Input shape: (946568, 13) ---> Ouput shape: (833255, 13)
+[filter_n_cashtags]       Input shape: (833255, 13) ---> Ouput shape: (501806, 13)

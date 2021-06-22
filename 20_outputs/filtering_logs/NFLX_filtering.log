@@ -1,0 +1,3 @@
+==========NFLX==========
+[filter_language]         Input shape: (374735, 13) ---> Ouput shape: (349502, 13)
+[filter_n_cashtags]       Input shape: (349502, 13) ---> Ouput shape: (181948, 13)

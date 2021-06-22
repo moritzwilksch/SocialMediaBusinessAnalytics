@@ -1,0 +1,3 @@
+==========INTC==========
+[filter_language]         Input shape: (132341, 13) ---> Ouput shape: (114021, 13)
+[filter_n_cashtags]       Input shape: (114021, 13) ---> Ouput shape: (59310, 13)

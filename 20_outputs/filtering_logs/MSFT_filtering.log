@@ -1,0 +1,3 @@
+==========MSFT==========
+[filter_language]         Input shape: (359870, 13) ---> Ouput shape: (319157, 13)
+[filter_n_cashtags]       Input shape: (319157, 13) ---> Ouput shape: (162018, 13)

@@ -21,7 +21,7 @@ tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", 
 # %%
 ticker = "INTC"
 
-SENTI = 'ml_sentiment'
+SENTI = 'vader'
 # SENTI = 'vader'
 
 # close_price = pd.read_parquet(root_path + "20_outputs/financial_ts/INTC_stock.parquet")['Close'].ffill()

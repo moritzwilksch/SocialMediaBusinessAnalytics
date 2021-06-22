@@ -1,0 +1,3 @@
+==========AMZN==========
+[filter_language]         Input shape: (669820, 13) ---> Ouput shape: (597180, 13)
+[filter_n_cashtags]       Input shape: (597180, 13) ---> Ouput shape: (331809, 13)

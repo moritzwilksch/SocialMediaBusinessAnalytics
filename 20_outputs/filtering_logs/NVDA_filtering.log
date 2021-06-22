@@ -1,0 +1,3 @@
+==========NVDA==========
+[filter_language]         Input shape: (279462, 13) ---> Ouput shape: (221952, 13)
+[filter_n_cashtags]       Input shape: (221952, 13) ---> Ouput shape: (97605, 13)
