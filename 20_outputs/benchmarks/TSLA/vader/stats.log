@@ -1,0 +1,26 @@
+rf
+{'max_depth': 14, 'min_samples_leaf': 20, 'max_features': 0.7319939418114051, 'ccp_alpha': 2.993292420985183}
+VALIDATION Accuracy = 0.5781
+TEST Accuracy = 0.5625
+              precision    recall  f1-score   support
+
+       False       0.00      0.00      0.00        56
+        True       0.56      1.00      0.72        72
+
+    accuracy                           0.56       128
+   macro avg       0.28      0.50      0.36       128
+weighted avg       0.32      0.56      0.40       128
+
+lgbm
+{'boosting_type': 'gbdt', 'alpha': 23.72213843133333, 'lambda_': 24.140800826863984, 'subsample': 0.8083973481164611, 'max_depth': 11, 'learning_rate': 0.11702263636127799, 'num_leaves': 23, 'n_estimators': 133}
+VALIDATION Accuracy = 0.5781
+TEST Accuracy = 0.5625
+              precision    recall  f1-score   support
+
+       False       0.00      0.00      0.00        56
+        True       0.56      1.00      0.72        72
+
+    accuracy                           0.56       128
+   macro avg       0.28      0.50      0.36       128
+weighted avg       0.32      0.56      0.40       128
+
