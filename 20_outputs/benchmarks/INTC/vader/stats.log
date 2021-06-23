@@ -1,26 +1,26 @@
 rf
-{'max_depth': 26, 'min_samples_leaf': 11, 'max_features': 0.1781288996397966, 'ccp_alpha': 2.7859186006081305}
-VALIDATION Accuracy = 0.6172
-TEST Accuracy = 0.5078
+{'max_depth': 23, 'min_samples_leaf': 18, 'max_features': 0.8647274942604365, 'ccp_alpha': 0.015845689446760763}
+VALIDATION Accuracy = 0.6328
+TEST Accuracy = 0.6328
               precision    recall  f1-score   support
 
-       False       0.00      0.00      0.00        63
-        True       0.51      1.00      0.67        65
+       False       0.90      0.29      0.43        63
+        True       0.58      0.97      0.73        65
 
-    accuracy                           0.51       128
-   macro avg       0.25      0.50      0.34       128
-weighted avg       0.26      0.51      0.34       128
+    accuracy                           0.63       128
+   macro avg       0.74      0.63      0.58       128
+weighted avg       0.74      0.63      0.58       128
 
 lgbm
-{'boosting_type': 'dart', 'alpha': 8.105398740671237, 'lambda_': 3.60945070347748, 'subsample': 0.025724580289657142, 'bagging_fraction': 0.008322517138209404, 'max_depth': 19, 'learning_rate': 0.1024244762234845, 'num_leaves': 12, 'n_estimators': 259}
+{'boosting_type': 'dart', 'alpha': 6.175043622561384, 'lambda_': 19.692420550455118, 'subsample': 0.7420533258370763, 'max_depth': 3, 'learning_rate': 0.17772381757041986, 'num_leaves': 7, 'n_estimators': 58}
 VALIDATION Accuracy = 0.6797
-TEST Accuracy = 0.5547
+TEST Accuracy = 0.6016
               precision    recall  f1-score   support
 
-       False       0.56      0.44      0.50        63
-        True       0.55      0.66      0.60        65
+       False       0.65      0.41      0.50        63
+        True       0.58      0.78      0.67        65
 
-    accuracy                           0.55       128
-   macro avg       0.56      0.55      0.55       128
-weighted avg       0.56      0.55      0.55       128
+    accuracy                           0.60       128
+   macro avg       0.61      0.60      0.59       128
+weighted avg       0.61      0.60      0.59       128
 
