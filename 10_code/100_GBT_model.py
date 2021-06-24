@@ -7,6 +7,7 @@ from lightgbm import LGBMClassifier, plot_importance
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
+from sklearn.model_selection import TimeSeriesSplit, cross_val_score
 from helpers.preprocessing import load_and_join_for_modeling, train_val_test_split
 from helpers.modeleval import eval_classification
 from rich.console import Console
@@ -15,7 +16,7 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "TSLA"
+ticker = "INTC"
 
 # SENTI = 'ml_sentiment'
 SENTI = 'vader'
@@ -23,7 +24,7 @@ SENTI = 'vader'
 # close_price = pd.read_parquet(root_path + "20_outputs/financial_ts/INTC_stock.parquet")['Close'].ffill()
 df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
 
-
+#%%
 df.label = df.label > 0
 
 
@@ -56,7 +57,13 @@ df = df.assign(moy=df.index.month)
 cat_fts = ['dow', 'moy']
 df[cat_fts] = df[cat_fts].astype('category')
 
+#%%
+# price = pd.read_parquet(root_path + f"20_outputs/financial_ts/{ticker}_stock.parquet")
+# price_ma = price['Close'].ffill().rolling(9).mean().bfill()
+# price_over_ma = price['Close'] > price_ma
 
+# df = df.join(price_over_ma.rename('price_over_ma'))
+# df['price_over_ma'] = df['price_over_ma'].astype('bool')
 
 # %%
 xtrain, ytrain, xval, yval, xtest, ytest = train_val_test_split(df)
@@ -78,14 +85,16 @@ def objective_rf(trial):
     )
     rf.fit(xtrain, ytrain)
     preds = rf.predict(xval)
-
     return accuracy_score(yval, preds)
+
+    # return cross_val_score(rf, pd.concat((xtrain, xval)), pd.concat((ytrain, yval)), n_jobs=-1, cv=TimeSeriesSplit(), scoring='accuracy').mean()
+
 
 
 MODEL = 'rf'
 sampler = optuna.samplers.TPESampler(seed=42)
 study = optuna.create_study(direction='maximize', sampler=sampler)
-study.optimize(objective_rf, n_trials=250)
+study.optimize(objective_rf, n_trials=100)
 
 c.print(f"Refit, TEST performance:", style="bold underline")
 rf_model = RandomForestClassifier(
@@ -106,6 +115,7 @@ print(f"{study.best_params} -> {study.best_value:.4f}")
 eval_classification(ytest, preds)
 print(classification_report(ytest, preds))
 
+#%%
 with open(root_path + f"20_outputs/benchmarks/{ticker}/{SENTI}/stats.log", 'a') as f:
     f.write(f"{MODEL}\n")
     f.write(f"{study.best_params}\nVALIDATION Accuracy = {study.best_value:.4f}\n")
@@ -152,8 +162,8 @@ def objective_gbm(trial):
     )
     lgbm_model.fit(xtrain, ytrain, verbose=False)
     preds = lgbm_model.predict(xval)
-
     return accuracy_score(yval, preds)
+    # return cross_val_score(lgbm_model, pd.concat((xtrain, xval)), pd.concat((ytrain, yval)), n_jobs=-1, cv=TimeSeriesSplit(), scoring='accuracy').mean()
 
 
 MODEL = 'lgbm'

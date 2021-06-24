@@ -4,7 +4,7 @@ import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.model_selection import GridSearchCV, cross_val_score, KFold
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
 import pandas as pd
@@ -71,13 +71,13 @@ RETRAIN = True
 if RETRAIN:
     def objective_lr(trial):
         c = trial.suggest_float('c', 1e-5, 10, log=True)
-        cv_scores = cross_val_score(LogisticRegression(C=c), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
+        cv_scores = cross_val_score(LogisticRegression(C=c), X=bow, y=df.sentiment, n_jobs=-1, cv=KFold(5, shuffle=True))
         return cv_scores.mean()
 
 
     def objective_nb(trial):
         alpha = trial.suggest_float('alpha', 1e-5, 10, log=True)
-        cv_scores = cross_val_score(MultinomialNB(alpha=alpha), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
+        cv_scores = cross_val_score(MultinomialNB(alpha=alpha), X=bow, y=df.sentiment, n_jobs=-1, cv=KFold(5, shuffle=True))
         return cv_scores.mean()
 
 
@@ -87,6 +87,7 @@ if RETRAIN:
 
     lr = LogisticRegression(C=study.best_params['c'], max_iter=150)
     lr.fit(bow, df.sentiment)
+    model = lr
 else:
     cv: TfidfVectorizer = joblib.load(root_path + "20_outputs/count_vectorizer.joblib")
     model: LogisticRegression = joblib.load(root_path + "20_outputs/sentiment_model.joblib")
@@ -111,7 +112,7 @@ if False:
             'max_depth': [50, 100, 150, 200, 250, 300, 500, 1000],
 
         },
-        cv=5,
+        cv=KFold(5, shuffle=True),
         n_jobs=-1,
         scoring="accuracy"
     )

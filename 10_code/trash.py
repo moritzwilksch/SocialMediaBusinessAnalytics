@@ -11,7 +11,6 @@ import pandas as pd
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from helpers.preprocessing import prepare_tweet_for_sentimodel, replace_with_generics
 vader = SentimentIntensityAnalyzer()
-from lightgbm import LGBMClassifier, LGBMModel
 
 root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
@@ -61,6 +60,8 @@ df.tweet = df.tweet.apply(prepare_tweet_for_sentimodel)
 # cv = CountVectorizer(token_pattern=r'[^\s]+')
 cv = TfidfVectorizer(token_pattern=r'[^\s]+')
 bow = cv.fit_transform(df.tweet)
+# from scipy import sparse
+# bow = sparse.csr_matrix((bow - bow.mean(axis=0))/bow.toarray().std(axis=0))
 
 # Check vocabulary:
 # with open(root_path + "20_outputs/cv_vocab.txt", 'w') as f:
@@ -68,39 +69,27 @@ bow = cv.fit_transform(df.tweet)
 #         f.writelines(v + "\n")
 
 # %%
-def objective_gbm(trial):
-    boosting_type = trial.suggest_categorical('boosting_type', ['gbdt', 'dart', 'goss'])
-    alpha = trial.suggest_float('alpha', 0, 25)
-    lambda_ = trial.suggest_float('lambda_', 0, 25)
-    subsample = trial.suggest_float('subsample', 0, 1)
-    max_depth = trial.suggest_int('max_depth', 2, 32, 1)
-    learning_rate = trial.suggest_float('learning_rate', 1e-1, 0.5, log=True)
-    num_leaves = trial.suggest_int('num_leaves', 2, 32, 1)
-    n_estimators = trial.suggest_int('n_estimators', 2, 300, 1)
-    lgbm_model = LGBMClassifier(
-        boosting_type=boosting_type,
-        subsample=subsample,
-        max_depth=max_depth,
-        learning_rate=learning_rate,
-        n_estimators=n_estimators,
-        num_leaves=num_leaves,
-        reg_alpha=alpha,
-        reg_lambda=lambda_,
-        random_state=42,
-        n_jobs=-1
-    )
+RETRAIN = True
+if RETRAIN:
+    def objective_lr(trial):
+        c = trial.suggest_float('c', 1e-5, 10, log=True)
+        cv_scores = cross_val_score(LogisticRegression(C=c), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
+        return cv_scores.mean()
 
-    cv_scores = cross_val_score(lgbm_model, X=bow, y=df.sentiment, n_jobs=-1, cv=5, scoring='accuracy')
-    return cv_scores.mean()
+    def objective_nb(trial):
+        alpha = trial.suggest_float('alpha', 1e-5, 10, log=True)
+        cv_scores = cross_val_score(MultinomialNB(alpha=alpha), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
+        return cv_scores.mean()
 
+    study = optuna.create_study(direction='maximize')
+    study.optimize(objective_lr, n_trials=100)
 
+    lr = LogisticRegression(C=study.best_params['c'], max_iter=150)
+    lr.fit(bow, df.sentiment)
+else:
+    cv: TfidfVectorizer = joblib.load(root_path + "20_outputs/count_vectorizer.joblib")
+    model: LogisticRegression = joblib.load(root_path + "20_outputs/sentiment_model.joblib")
 
-study = optuna.create_study(direction='maximize')
-study.optimize(objective_gbm, n_trials=50)
-
-#%%
-model = LGBMClassifier(**study.best_params, random_state=42, n_jobs=-1)
-model.fit(bow, df.sentiment)
 
 #%%
 rev = {v: k for k, v in cv.vocabulary_.items()}
@@ -110,3 +99,26 @@ for i, w in enumerate(['NEGATIVE', 'NEUTRAL', 'POSITIVE']):
     print(f"======={'='*12}=======")
     for i in model.coef_[i].argsort()[-20:]:
         print("- " + rev[i])
+
+# %%
+if False:
+    print("=== Random Forest ===")
+    rs_rf = GridSearchCV(
+        RandomForestClassifier(n_estimators=100, random_state=123),
+        {
+            'criterion': ['gini', 'entropy'],
+            'max_depth': [50, 100, 150, 200, 250, 300, 500, 1000],
+
+        },
+        cv=5,
+        n_jobs=-1,
+        scoring="accuracy"
+    )
+
+    rs_rf.fit(bow, df.sentiment)
+    print(f"{rs_rf.best_params_} -> {rs_rf.best_score_:.4f}")
+
+# %%
+if False:
+    joblib.dump(cv, root_path + "20_outputs/count_vectorizer.joblib")
+    joblib.dump(lr, root_path + "20_outputs/sentiment_model.joblib")

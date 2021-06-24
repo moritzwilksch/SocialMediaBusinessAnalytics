@@ -27,7 +27,7 @@ df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
 
 df.label = df.label > 0
 
-
+#%%
 for i in range(2, 6):
     df[f'return_lag{i}'] = df['return'].shift(i)    # TODO: Feature Engineering?
     df[f'senti_lag{i}'] = df[SENTI].shift(i)    # TODO: Feature Engineering?
