@@ -1,4 +1,5 @@
 # %%
+from os import P_PID
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
 from sklearn.ensemble import RandomForestClassifier
@@ -19,8 +20,8 @@ tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", 
 # %%
 ticker = "INTC"
 
-SENTI = 'ml_sentiment'
-# SENTI = 'vader'
+# SENTI = 'ml_sentiment'
+SENTI = 'vader'
 
 df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
 
@@ -28,11 +29,11 @@ df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
 df.label = df.label > 0
 
 #%%
-for i in range(2, 6):
-    df[f'return_lag{i}'] = df['return'].shift(i)    # TODO: Feature Engineering?
-    df[f'senti_lag{i}'] = df[SENTI].shift(i)    # TODO: Feature Engineering?
-    df[f'ma_{i}'] = df['return'].rolling(i).mean()  # TODO: Feature Engineering?
-    df[f'ms_{i}'] = df[SENTI].rolling(i).mean()  # TODO: Feature Engineering?
+# for i in range(2, 6):
+#     df[f'return_lag{i}'] = df['return'].shift(i)    # TODO: Feature Engineering?
+#     df[f'senti_lag{i}'] = df[SENTI].shift(i)    # TODO: Feature Engineering?
+#     df[f'ma_{i}'] = df['return'].rolling(i).mean()  # TODO: Feature Engineering?
+#     df[f'ms_{i}'] = df[SENTI].rolling(i).mean()  # TODO: Feature Engineering?
 
 df = df.fillna(0)
 
@@ -82,14 +83,23 @@ net = tf.keras.Sequential([
     tf.keras.layers.Dense(1, activation='sigmoid'),
 ])
 
+# net = tf.keras.Sequential([
+#     tf.keras.layers.Conv1D(32, 25),
+#     tf.keras.layers.Dropout(DROPOUT),
+#     tf.keras.layers.Flatten(),
+#     tf.keras.layers.Dense(128, activation='relu', kernel_regularizer='l2'),
+#     tf.keras.layers.Dropout(DROPOUT),
+#     tf.keras.layers.Dense(1, activation='sigmoid'),
+# ])
+
 
 net.compile(tf.keras.optimizers.Adam(3e-4), 'binary_crossentropy', metrics=['accuracy'],)
 
 hist = net.fit(
-    x=xtrain.values,
+    x=xtrain_ss.values,
     y=ytrain.values.astype('int'),
     batch_size=32,
-    validation_data=(xval.values, yval.values.astype('int')),
+    validation_data=(xval_ss.values, yval.values.astype('int')),
     epochs=100 
 )
 
@@ -97,15 +107,39 @@ hist = net.fit(
 pd.DataFrame({'acc': hist.history['accuracy'], 'validation': hist.history['val_accuracy']}).plot()
 
 #%%
+net = tf.keras.Sequential([
+    tf.keras.layers.Dense(128, activation='relu', kernel_regularizer='l2'),
+    tf.keras.layers.Dropout(DROPOUT),
+    tf.keras.layers.Dense(128, activation='relu', kernel_regularizer='l2'),
+    tf.keras.layers.Dropout(DROPOUT),
+    tf.keras.layers.Dense(1, activation='sigmoid'),
+])
+
+net.compile(tf.keras.optimizers.Adam(3e-4), 'binary_crossentropy', metrics=['accuracy'],)
 
 hist = net.fit(
-    x=np.vstack((xtrain.values, xval.values)),
+    x=np.vstack((xtrain_ss.values, xval_ss.values)),
     y=np.hstack((ytrain.values, yval.values)),
-    batch_size=32,
-    epochs=100
+    batch_size=64,
+    epochs=300,
 )
 
 pd.DataFrame({'train_loss': hist.history['loss'],}).plot()
 
+#%%
 
-print(classification_report(ytest, net.predict_classes(xtest.values)))
+print(classification_report(ytest, net.predict(xtest_ss.values) > 0.5))
+
+#%%
+import shap
+exp = shap.explainers.Sampling(net.predict, xtest_ss)
+sv = exp.shap_values(xtest_ss)
+
+#%%
+shap.partial_dependence_plot("num_tweets", lambda x: net.predict(x).squeeze(), xtest_ss, ice=False, model_expected_value=True, feature_expected_value=True)
+
+#%%
+shap.summary_plot(sv, xtest_ss)
+
+
+# TODO: Does DL beat LGBM

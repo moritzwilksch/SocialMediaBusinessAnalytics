@@ -16,10 +16,10 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "INTC"
+ticker = "AAPL"
 
-# SENTI = 'ml_sentiment'
-SENTI = 'vader'
+SENTI = 'ml_sentiment'
+# SENTI = 'vader'
 
 # close_price = pd.read_parquet(root_path + "20_outputs/financial_ts/INTC_stock.parquet")['Close'].ffill()
 df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)

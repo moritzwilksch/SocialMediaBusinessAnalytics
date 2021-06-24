@@ -1,124 +1,137 @@
 # %%
-import optuna
-import joblib
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-import numpy as np
+from typing import Literal
+from typing import Tuple
 import pandas as pd
-from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
-from helpers.preprocessing import prepare_tweet_for_sentimodel, replace_with_generics
-vader = SentimentIntensityAnalyzer()
+import numpy as np
+from rich.console import Console
+import nltk
+import string
 
 root_path = "../"
-tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
-
-# %%
-df = pd.read_csv(root_path + "00_source_data/SRS_sentiment_labeled.csv", index_col='Unnamed: 0')
-df
-
-# %%
+VADER_THRESH = 0.05
+c = Console(highlight=False)
+ps = nltk.stem.PorterStemmer()
 
 
-def get_vader_senti(tweet):
-    return vader.polarity_scores(tweet).get('compound')
+def load_and_join_for_modeling(ticker: str, version: Literal['vader', 'ml_sentiment']) -> pd.DataFrame:
+    """
+    For `ticker`:
+    - loads tweet & senti data
+    - calculates features
+    - joins it
+    """
+    if version not in ('vader', 'ml_sentiment'):
+        raise ValueError("`version` must be either 'vader' or 'ml_sentiment'")
 
+    # loading
+    tweet_df = pd.read_parquet(root_path + f"20_outputs/clean_tweets/{ticker}_clean.parquet")
+    senti_df = pd.read_parquet(root_path + f"20_outputs/{'vader_sentiments' if version == 'vader' else 'ml_sentiments'}/{ticker}_sentiment.parquet")
 
-# df.tweet = df.tweet.str.replace("\d+", "NUM", regex=True)
-# df.tweet = df.tweet.str.replace("\$\w+", "TICKER", regex=True)
-# df.tweet = df.tweet.str.replace("#\w+", "HASHTAG", regex=True)
+    prices = pd.read_parquet(root_path + f"20_outputs/financial_ts/{ticker}_stock.parquet")
+    prices.index = pd.DatetimeIndex(prices.index)
 
-df = replace_with_generics(df)  # replace numbers, hashtags, tickers
+    result = pd.merge(tweet_df, senti_df, how='left', on='id', validate="1:1")
 
-df = df.assign(vader=df.tweet.apply(get_vader_senti))
+    result = result.assign(impressions=result.retweets_count + result.likes_count + 1)  # base value 1 to not loose tweets without likes
 
-# %%
-df = df.assign(vader_bin=np.select(
-    [
-        df.vader <= -0.05,
-        df.vader >= 0.05,
-    ],
-    [
-        -1,
-        1,
-    ],
-    default=0
-))
+    
 
-# %%
-pd.crosstab(df.sentiment, df.vader_bin)
-pd.crosstab(df.sentiment, df.vader_bin).to_csv(root_path + "30_results/vader_acc.csv", sep=";")
-#%%
-print(f"VADER accuracy = {(df.vader_bin == df.sentiment).mean():.3f}")
+    daily_senti_ts = senti_df.groupby(result.created_at.dt.date).agg({version: np.mean})
+    # daily_senti_ts = senti_df.groupby(result.created_at.dt.date)['vader'].mean()  # OLD
+    daily_senti_ts.index = pd.DatetimeIndex(daily_senti_ts.index)
 
-######################################################################
-# %%
-df.tweet = df.tweet.apply(prepare_tweet_for_sentimodel)
+    # returns
+    returns = prices['Close'].pct_change()
+    returns[returns == 0] = pd.NA
 
-# cv = CountVectorizer(token_pattern=r'[^\s]+')
-cv = TfidfVectorizer(token_pattern=r'[^\s]+')
-bow = cv.fit_transform(df.tweet)
-# from scipy import sparse
-# bow = sparse.csr_matrix((bow - bow.mean(axis=0))/bow.toarray().std(axis=0))
-
-# Check vocabulary:
-# with open(root_path + "20_outputs/cv_vocab.txt", 'w') as f:
-#     for v in cv.vocabulary_.keys():
-#         f.writelines(v + "\n")
-
-# %%
-RETRAIN = True
-if RETRAIN:
-    def objective_lr(trial):
-        c = trial.suggest_float('c', 1e-5, 10, log=True)
-        cv_scores = cross_val_score(LogisticRegression(C=c), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
-        return cv_scores.mean()
-
-    def objective_nb(trial):
-        alpha = trial.suggest_float('alpha', 1e-5, 10, log=True)
-        cv_scores = cross_val_score(MultinomialNB(alpha=alpha), X=bow, y=df.sentiment, n_jobs=-1, cv=5)
-        return cv_scores.mean()
-
-    study = optuna.create_study(direction='maximize')
-    study.optimize(objective_lr, n_trials=100)
-
-    lr = LogisticRegression(C=study.best_params['c'], max_iter=150)
-    lr.fit(bow, df.sentiment)
-else:
-    cv: TfidfVectorizer = joblib.load(root_path + "20_outputs/count_vectorizer.joblib")
-    model: LogisticRegression = joblib.load(root_path + "20_outputs/sentiment_model.joblib")
-
-
-#%%
-rev = {v: k for k, v in cv.vocabulary_.items()}
-for i, w in enumerate(['NEGATIVE', 'NEUTRAL', 'POSITIVE']):
-    print(f"======={'='*12}=======")
-    print(f"======= {w:^10} =======")
-    print(f"======={'='*12}=======")
-    for i in model.coef_[i].argsort()[-20:]:
-        print("- " + rev[i])
-
-# %%
-if False:
-    print("=== Random Forest ===")
-    rs_rf = GridSearchCV(
-        RandomForestClassifier(n_estimators=100, random_state=123),
-        {
-            'criterion': ['gini', 'entropy'],
-            'max_depth': [50, 100, 150, 200, 250, 300, 500, 1000],
-
-        },
-        cv=5,
-        n_jobs=-1,
-        scoring="accuracy"
+    # calculation of metrics
+    pct_pos = (
+        result
+        .assign(is_pos=result.vader > VADER_THRESH if version == 'vader' else result.ml_sentiment > 0)
+        .groupby(result.created_at.dt.date)
+        ['is_pos']
+        .mean()
     )
+    pct_pos.index = pd.DatetimeIndex(pct_pos.index)
 
-    rs_rf.fit(bow, df.sentiment)
-    print(f"{rs_rf.best_params_} -> {rs_rf.best_score_:.4f}")
+    pct_neg = (
+        result
+        .assign(is_neg=result.vader < -VADER_THRESH if version == 'vader' else result.ml_sentiment < 0)
+        .groupby(result.created_at.dt.date)
+        ['is_neg']
+        .mean()
+    )
+    pct_neg.index = pd.DatetimeIndex(pct_neg.index)
+
+    # produce final df through concat
+    final: pd.DataFrame = pd.concat(
+        [
+            daily_senti_ts,
+            pct_pos.rename("pct_pos"),
+            pct_neg.rename("pct_neg"),
+            prices["Volume"].fillna(0).rename('volume'),
+            tweet_df.groupby(tweet_df.created_at.dt.date)['id'].count().rename('num_tweets'),
+            returns.rename('return').fillna(0),  # return is zeroed on week ends
+            returns.bfill().shift(-1).rename('label')  # label is bfilled
+        ],
+        axis=1)
+
+    final.index = pd.DatetimeIndex(final.index)
+
+    # backfill prediction label only
+    final['label'] = final['label'].bfill()
+
+    # Test for join errors...
+    col_obj_mapping = {
+        # 'vader': daily_senti_ts,  # Test for UNweighted equality
+        'pct_pos': pct_pos,
+        'pct_neg': pct_neg,
+        'volume': prices['Volume'].fillna(0),
+        'return': returns.fillna(0),
+    }
+
+    test_dates = ['2019-06-30', '2019-01-18',
+                  '2019-03-07', '2019-06-16',
+                  '2019-08-30', '2019-12-09',
+                  '2020-07-20', '2019-12-29',
+                  '2020-10-06', '2019-05-05']
+
+    for date in test_dates:
+        assert all([final.loc[date][col] == col_obj_mapping.get(col).loc[date] for col in ['pct_pos', 'pct_neg', 'volume', 'return']])
+
+    return final
+
+
+def train_val_test_split(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """ Given data returns xtrain, ytrain, xval, yval, xtest, ytest for 596/128/128 split """
+    TRAIN_VAL_CUTOFF = "2020-08-18"
+    VAL_TEST_CUTOFF = "2020-12-24"
+
+    train = data.loc[:TRAIN_VAL_CUTOFF]
+    val = data.loc[pd.to_datetime(TRAIN_VAL_CUTOFF) + pd.DateOffset(1):VAL_TEST_CUTOFF]
+    test = data.loc[pd.to_datetime(VAL_TEST_CUTOFF) + pd.DateOffset(1):]
+
+    return train.drop('label', axis=1), train['label'], val.drop('label', axis=1), val['label'], test.drop('label', axis=1), test['label']
+
+
+def prepare_tweet_for_sentimodel(tweet: str) -> str:
+    """Per word: to lower, stem, remove punctuation (keep emojies) """
+    return " ".join([ps.stem(x.lower().strip(string.punctuation + """”'’""")) for x in tweet.split(' ')])
+
+
+def replace_with_generics(data: pd.DataFrame) -> pd.DataFrame:
+    data = data.copy()
+    data.tweet = data.tweet.str.replace("\d+", "NUM", regex=True)
+    data.tweet = data.tweet.str.replace("\$\w+", "TICKER", regex=True)
+    data.tweet = data.tweet.str.replace("#\w+", "HASHTAG", regex=True)
+    return data
+
 
 # %%
-if False:
-    joblib.dump(cv, root_path + "20_outputs/count_vectorizer.joblib")
-    joblib.dump(lr, root_path + "20_outputs/sentiment_model.joblib")
+if __name__ == "__main__":
+    pass
+    # root_path = "../../"
+    # df = load_and_join_for_modeling('INTC', 'ml_sentiment')
+    # df
+
+# %%
