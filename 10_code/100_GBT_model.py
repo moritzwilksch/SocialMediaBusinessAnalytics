@@ -16,7 +16,7 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "AAPL"
+ticker = "TSLA"
 
 SENTI = 'ml_sentiment'
 # SENTI = 'vader'
@@ -183,11 +183,11 @@ lgbm_model = LGBMClassifier(
     reg_lambda=study.best_params['lambda_'],
     random_state=42
 )
-lgbm_model.fit(pd.concat((xtrain, xval)), pd.concat((ytrain, yval)))
-preds = lgbm_model.predict(xtest)
 # lgbm_model.fit(xtrain, ytrain)
+lgbm_model.fit(pd.concat((xtrain, xval)), pd.concat((ytrain, yval)))
 # refit = lgbm_model.booster_.refit(xval, yval, decay_rate=0.6)
 # preds = refit.predict(xtest) > 0.5
+preds = lgbm_model.predict(xtest)
 print(f"{study.best_params} -> {study.best_value:.4f}")
 eval_classification(ytest, preds)
 print(classification_report(ytest, preds))

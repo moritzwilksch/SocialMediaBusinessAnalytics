@@ -1,27 +1,21 @@
 # %%
-from os import P_PID
 from sklearn.preprocessing import StandardScaler
 import tensorflow as tf
-from sklearn.ensemble import RandomForestClassifier
-import seaborn as sns
-import matplotlib.pyplot as plt
 import optuna
-from lightgbm import LGBMClassifier, plot_importance
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
 from helpers.preprocessing import load_and_join_for_modeling, train_val_test_split
-from helpers.modeleval import eval_classification
 from rich.console import Console
 c = Console(highlight=False)
 root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "INTC"
+ticker = "TSLA"
 
-# SENTI = 'ml_sentiment'
-SENTI = 'vader'
+SENTI = 'ml_sentiment'
+# SENTI = 'vader'
 
 df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
 
@@ -29,11 +23,11 @@ df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
 df.label = df.label > 0
 
 #%%
-# for i in range(2, 6):
-#     df[f'return_lag{i}'] = df['return'].shift(i)    # TODO: Feature Engineering?
-#     df[f'senti_lag{i}'] = df[SENTI].shift(i)    # TODO: Feature Engineering?
-#     df[f'ma_{i}'] = df['return'].rolling(i).mean()  # TODO: Feature Engineering?
-#     df[f'ms_{i}'] = df[SENTI].rolling(i).mean()  # TODO: Feature Engineering?
+for i in range(2, 6):
+    df[f'return_lag{i}'] = df['return'].shift(i)    # TODO: Feature Engineering?
+    df[f'senti_lag{i}'] = df[SENTI].shift(i)    # TODO: Feature Engineering?
+    df[f'ma_{i}'] = df['return'].rolling(i).mean()  # TODO: Feature Engineering?
+    df[f'ms_{i}'] = df[SENTI].rolling(i).mean()  # TODO: Feature Engineering?
 
 df = df.fillna(0)
 
@@ -56,6 +50,12 @@ df = df.assign(moy=df.index.month)
 cat_fts = ['dow', 'moy']
 df[cat_fts] = df[cat_fts].astype('category')
 
+
+#############################################
+# df = df.drop(SENTI, axis=1)
+#############################################
+
+
 num_fts = [col for col in df.columns.drop('label') if col not in cat_fts]
 # %%
 xtrain, ytrain, xval, yval, xtest, ytest = train_val_test_split(df)
@@ -73,61 +73,103 @@ xtest_ss = xtest.copy()
 xtest_ss[num_fts] = ss.transform(xtest[num_fts])
 
 #%%
+import optuna
 tf.random.set_seed(42)
-DROPOUT = 0.2
-net = tf.keras.Sequential([
-    tf.keras.layers.Dense(128, activation='relu', kernel_regularizer='l2'),
-    tf.keras.layers.Dropout(DROPOUT),
-    tf.keras.layers.Dense(128, activation='relu', kernel_regularizer='l2'),
-    tf.keras.layers.Dropout(DROPOUT),
-    tf.keras.layers.Dense(1, activation='sigmoid'),
-])
 
-# net = tf.keras.Sequential([
-#     tf.keras.layers.Conv1D(32, 25),
-#     tf.keras.layers.Dropout(DROPOUT),
-#     tf.keras.layers.Flatten(),
-#     tf.keras.layers.Dense(128, activation='relu', kernel_regularizer='l2'),
-#     tf.keras.layers.Dropout(DROPOUT),
-#     tf.keras.layers.Dense(1, activation='sigmoid'),
-# ])
+def objective(trial):
+    DROPOUT = trial.suggest_float('dropout', 0, 1)
+    units1 = 2 ** trial.suggest_int('units1', 4, 11) 
+    units2 = 2 ** trial.suggest_int('units2', 4, 11) 
+    epochs = trial.suggest_int('epochs', 1, 300) 
+    act = trial.suggest_categorical('act', ['sigmoid', 'relu'])
+    net = tf.keras.Sequential([
+        tf.keras.layers.Dense(units1, activation=act, kernel_regularizer='l2'),
+        tf.keras.layers.Dropout(DROPOUT),
+        tf.keras.layers.Dense(units2, activation=act, kernel_regularizer='l2'),
+        tf.keras.layers.Dropout(DROPOUT),
+        tf.keras.layers.Dense(1, activation='sigmoid'),
+    ])
 
+    net.compile(tf.keras.optimizers.Adam(3e-4), 'binary_crossentropy', metrics=['accuracy'],)
 
-net.compile(tf.keras.optimizers.Adam(3e-4), 'binary_crossentropy', metrics=['accuracy'],)
+    hist = net.fit(
+        x=xtrain_ss.values,
+        y=ytrain.values.astype('int'),
+        batch_size=32,
+        validation_data=(xval_ss.values, yval.values.astype('int')),
+        epochs=epochs,
+        verbose=False,
+        callbacks=[tf.keras.callbacks.EarlyStopping(patience=30, restore_best_weights=True)],
+        workers=-1
 
-hist = net.fit(
-    x=xtrain_ss.values,
-    y=ytrain.values.astype('int'),
-    batch_size=32,
-    validation_data=(xval_ss.values, yval.values.astype('int')),
-    epochs=100 
-)
+    )
 
-# pd.DataFrame({'train_loss': hist.history['loss'], 'val_loss': hist.history['val_loss']}).plot()
-pd.DataFrame({'acc': hist.history['accuracy'], 'validation': hist.history['val_accuracy']}).plot()
+    preds = net.predict(xval_ss) > 0.5
+    return accuracy_score(yval, preds)
+
+sampler = optuna.samplers.TPESampler(seed=42)
+study = optuna.create_study(direction='maximize', sampler=sampler)
+study.optimize(objective, n_trials=100)
 
 #%%
+
+# pd.DataFrame({'train_loss': hist.history['loss'], 'val_loss': hist.history['val_loss']}).plot()
+# pd.DataFrame({'acc': hist.history['accuracy'], 'validation': hist.history['val_accuracy']}).plot()
+DROPOUT = study.best_params['dropout']
 net = tf.keras.Sequential([
-    tf.keras.layers.Dense(128, activation='relu', kernel_regularizer='l2'),
+    tf.keras.layers.Dense(2**study.best_params['units1'], activation=study.best_params['act'], kernel_regularizer='l2'),
     tf.keras.layers.Dropout(DROPOUT),
-    tf.keras.layers.Dense(128, activation='relu', kernel_regularizer='l2'),
+    tf.keras.layers.Dense(2**study.best_params['units2'], activation=study.best_params['act'], kernel_regularizer='l2'),
     tf.keras.layers.Dropout(DROPOUT),
     tf.keras.layers.Dense(1, activation='sigmoid'),
 ])
 
-net.compile(tf.keras.optimizers.Adam(3e-4), 'binary_crossentropy', metrics=['accuracy'],)
 
+#%%
+from helpers import lr_finder
+def get_net():
+    DROPOUT = 0.2
+    net = tf.keras.Sequential([
+        tf.keras.layers.Dense(2**6, activation='relu', kernel_regularizer='l2'),
+        tf.keras.layers.Dropout(DROPOUT),
+        tf.keras.layers.Dense(2**9, activation='relu', kernel_regularizer='l2'),
+        tf.keras.layers.Dropout(DROPOUT),
+        tf.keras.layers.Dense(1, activation='sigmoid'),
+    ])
+    return net
+
+net = get_net()
+
+net.compile('adam', 'binary_crossentropy', metrics=['accuracy'],)
+net.build(input_shape=xtrain_ss.shape)
+net.fit(xtrain_ss, ytrain, callbacks=[lr_finder.LRFinder(1e-4, 1)], epochs=10)
+#%%
+net = get_net()
+net.compile(tf.keras.optimizers.Adam(10**-1.5), 'binary_crossentropy', metrics=['accuracy'],)
+
+hist = net.fit(
+    x=xtrain_ss,#np.vstack((xtrain_ss.values, xval_ss.values)),
+    y=ytrain, #np.hstack((ytrain.values, yval.values)),
+    validation_data=(xval_ss, yval),
+    batch_size=8,
+    epochs=300,
+    callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=25, restore_best_weights=True)],
+
+)
+
+pd.DataFrame({'train_loss': hist.history['loss']}).plot()
+print(classification_report(ytest, net.predict(xtest_ss.values) > 0.5))
+
+#%%
 hist = net.fit(
     x=np.vstack((xtrain_ss.values, xval_ss.values)),
     y=np.hstack((ytrain.values, yval.values)),
-    batch_size=64,
-    epochs=300,
+    # validation_data=(xval_ss, yval),
+    batch_size=8,
+    epochs=100,
+    # callbacks=[tf.keras.callbacks.EarlyStopping(patience=50, restore_best_weights=True)],
+
 )
-
-pd.DataFrame({'train_loss': hist.history['loss'],}).plot()
-
-#%%
-
 print(classification_report(ytest, net.predict(xtest_ss.values) > 0.5))
 
 #%%
