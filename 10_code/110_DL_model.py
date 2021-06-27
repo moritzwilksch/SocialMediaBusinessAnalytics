@@ -12,10 +12,10 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "TSLA"
+ticker = "INTC"
 
-SENTI = 'ml_sentiment'
-# SENTI = 'vader'
+# SENTI = 'ml_sentiment'
+SENTI = 'vader'
 
 df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
 
@@ -99,11 +99,15 @@ def objective(trial):
         validation_data=(xval_ss.values, yval.values.astype('int')),
         epochs=epochs,
         verbose=False,
-        callbacks=[tf.keras.callbacks.EarlyStopping(patience=30, restore_best_weights=True)],
+        callbacks=[
+            tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, restore_best_weights=True),
+            tf.keras.callbacks.ModelCheckpoint('kerastrash/model', monitor='val_loss', save_best_only=True, save_weights_only=True)
+        ],
         workers=-1
 
     )
 
+    net.load_weights("kerastrash/model")
     preds = net.predict(xval_ss) > 0.5
     return accuracy_score(yval, preds)
 
@@ -128,11 +132,11 @@ net = tf.keras.Sequential([
 #%%
 from helpers import lr_finder
 def get_net():
-    DROPOUT = 0.2
+    DROPOUT = 0.04
     net = tf.keras.Sequential([
-        tf.keras.layers.Dense(2**6, activation='relu', kernel_regularizer='l2'),
-        tf.keras.layers.Dropout(DROPOUT),
         tf.keras.layers.Dense(2**9, activation='relu', kernel_regularizer='l2'),
+        tf.keras.layers.Dropout(DROPOUT),
+        tf.keras.layers.Dense(2**11, activation='relu', kernel_regularizer='l2'),
         tf.keras.layers.Dropout(DROPOUT),
         tf.keras.layers.Dense(1, activation='sigmoid'),
     ])
@@ -148,14 +152,23 @@ net = get_net()
 net.compile(tf.keras.optimizers.Adam(10**-1.5), 'binary_crossentropy', metrics=['accuracy'],)
 
 hist = net.fit(
-    x=xtrain_ss,#np.vstack((xtrain_ss.values, xval_ss.values)),
-    y=ytrain, #np.hstack((ytrain.values, yval.values)),
-    validation_data=(xval_ss, yval),
+    x=xtrain_ss,
+    y=ytrain,
+    # x=np.vstack((xtrain_ss.values, xval_ss.values)),
+    # y=np.hstack((ytrain.values, yval.values)),
+    # validation_data=(xval_ss, yval),
+    validation_split=0.2,
     batch_size=8,
     epochs=300,
-    callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=25, restore_best_weights=True)],
+    callbacks=[
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, restore_best_weights=True),
+        tf.keras.callbacks.ModelCheckpoint('kerastrash/model', monitor='val_loss', save_best_only=True, save_weights_only=True)
+        ],
 
 )
+
+#%%
+net.load_weights('kerastrash/model')
 
 pd.DataFrame({'train_loss': hist.history['loss']}).plot()
 print(classification_report(ytest, net.predict(xtest_ss.values) > 0.5))

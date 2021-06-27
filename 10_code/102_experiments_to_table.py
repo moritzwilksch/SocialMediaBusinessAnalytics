@@ -16,16 +16,16 @@ baseline_acc = pd.read_csv(root_path + f"30_results/naive_baseline_benchmarks.cs
 results = []
 no_senti_results = []
 
-for ticker, senti in product(tickers, ['ml_sentiment', 'vader']):
-    with open(root_path + f"20_outputs/benchmarks/{ticker}/{senti}/stats.log", 'r') as f:
-        s = f.read()
-    rfscore, lgbmscore = [float(x) for x in re.findall("(?<=TEST Accuracy = )(.*)\n", s)]
-    results.append((ticker, senti, rfscore, lgbmscore))
+# for ticker, senti in product(tickers, ['ml_sentiment', 'vader']):
+#     with open(root_path + f"20_outputs/benchmarks/{ticker}/{senti}/stats.log", 'r') as f:
+#         s = f.read()
+#     rfscore, lgbmscore = [float(x) for x in re.findall("(?<=TEST Accuracy = )(.*)\n", s)]
+#     results.append((ticker, senti, rfscore, lgbmscore))
 
 for ticker in tickers:
     with open(root_path + f"20_outputs/benchmarks/{ticker}/stats_noSenti.log", 'r') as f:
         s = f.read()
-    rfscore, lgbmscore = [float(x) for x in re.findall("(?<=TEST Accuracy = )(.*)\n", s)]
+    rfscore, lgbmscore = [float(x) for x in re.findall("(?<=TEST Accuracy = )(.*)\n", s)[-2:]]
     no_senti_results.append((ticker, rfscore, lgbmscore))
 
 # %%

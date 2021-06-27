@@ -49,9 +49,28 @@ df = df.assign(vader_bin=np.select(
 
 # %%
 pd.crosstab(df.sentiment, df.vader_bin)
-pd.crosstab(df.sentiment, df.vader_bin).to_csv(root_path + "30_results/vader_acc.csv", sep=";")
+# pd.crosstab(df.sentiment, df.vader_bin).to_csv(root_path + "30_results/vader_acc.csv", sep=";")
 #%%
 print(f"VADER accuracy = {(df.vader_bin == df.sentiment).mean():.3f}")
+
+#%%
+# Random Guess CI
+accs = []
+for i in range(10000):
+    guess = np.random.choice([-1, 0, 1], p=(555/3000, 1276/3000, 1169/3000), size=3000)
+    accs.append((df.vader_bin == guess).mean())
+accs = np.array(accs)
+
+print(accs.mean().round(3), accs.std().round(5))
+
+#%%
+# VADER CI
+accs = []
+for i in range(10000):
+    resample = df.sample(frac=1, replace=True)
+    accs.append((resample['vader_bin'] == resample['sentiment']).mean())
+accs = np.array(accs)
+print(accs.mean().round(3), accs.std().round(5))
 
 ######################################################################
 # %%
@@ -100,7 +119,7 @@ for i, w in enumerate(['NEGATIVE', 'NEUTRAL', 'POSITIVE']):
     print(f"======= {w:^10} =======")
     print(f"======={'='*12}=======")
     for i in model.coef_[i].argsort()[-20:]:
-        print("- " + rev[i])
+        print("• " + rev[i], end=' ')
 
 # %%
 if False:

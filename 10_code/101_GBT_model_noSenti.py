@@ -36,7 +36,7 @@ for ticker in tickers:
     df = df.fillna(0)
 
     ############################
-    df = df.drop(SENTI, axis=1)
+    df = df.drop([SENTI, 'pct_pos', 'pct_neg', 'num_tweets'], axis=1)
     ############################
 
 

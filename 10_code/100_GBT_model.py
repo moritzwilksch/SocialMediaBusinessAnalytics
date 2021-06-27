@@ -7,7 +7,7 @@ from lightgbm import LGBMClassifier, plot_importance
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
-from sklearn.model_selection import TimeSeriesSplit, cross_val_score
+from sklearn.model_selection import KFold, TimeSeriesSplit, cross_val_score
 from helpers.preprocessing import load_and_join_for_modeling, train_val_test_split
 from helpers.modeleval import eval_classification
 from rich.console import Console
@@ -16,10 +16,10 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "TSLA"
+ticker = "INTC"
 
-SENTI = 'ml_sentiment'
-# SENTI = 'vader'
+# SENTI = 'ml_sentiment'
+SENTI = 'vader'
 
 # close_price = pd.read_parquet(root_path + "20_outputs/financial_ts/INTC_stock.parquet")['Close'].ffill()
 df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
@@ -83,6 +83,7 @@ def objective_rf(trial):
         n_jobs=-1,
         random_state=42
     )
+    
     rf.fit(xtrain, ytrain)
     preds = rf.predict(xval)
     return accuracy_score(yval, preds)
@@ -164,6 +165,7 @@ def objective_gbm(trial):
     preds = lgbm_model.predict(xval)
     return accuracy_score(yval, preds)
     # return cross_val_score(lgbm_model, pd.concat((xtrain, xval)), pd.concat((ytrain, yval)), n_jobs=-1, cv=TimeSeriesSplit(), scoring='accuracy').mean()
+    # return cross_val_score(lgbm_model, pd.concat((xtrain, xval)), pd.concat((ytrain, yval)), n_jobs=-1, cv=KFold(), scoring='accuracy').mean()
 
 
 MODEL = 'lgbm'
