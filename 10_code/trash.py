@@ -9,6 +9,7 @@ from lightgbm import LGBMClassifier, plot_importance
 import numpy as np
 from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import KFold, TimeSeriesSplit, cross_val_score
 from helpers.preprocessing import load_and_join_for_modeling, train_val_test_split
@@ -71,14 +72,18 @@ df[cat_fts] = df[cat_fts].astype('category')
 # %%
 xtrain, ytrain, xval, yval, xtest, ytest = train_val_test_split(df)
 
-
+ss = StandardScaler()
+ss.fit(xtrain)
+xtrain = ss.transform(xtrain)
+xval = ss.transform(xval)
+xtest = ss.transform(xtest)
 #%%
 import optuna
 
 def objective_svc(trial):
     params = {
-        'C': trial.suggest_float('C', 1e-6, 10, log=True),
-        'kernel': trial.suggest_categorical('kernel', ['rbf', 'linear', 'poly', 'sigmoid'])
+        'n_neighbors': trial.suggest_int('n_neighbors', 1, 20),
+        'weights': trial.suggest_categorical('weights', ['uniform', 'distance'])
     }
     svc = KNeighborsClassifier(n_jobs=-1, **params)
 
@@ -96,9 +101,9 @@ study.optimize(objective_svc, n_trials=200)
 
 #%%
 c.print(f"Refit, TEST performance:", style="bold underline")
-svc_model = SVC(random_state=42, **study.best_params)
-svc_model.fit(pd.concat((xtrain, xval)), pd.concat((ytrain, yval)))
-# rf_model.fit(xtrain, ytrain)  # re-create original model (optuna does not return...)
+svc_model = KNeighborsClassifier(**study.best_params)
+# svc_model.fit(pd.concat((xtrain, xval)), pd.concat((ytrain, yval)))
+svc_model.fit(np.vstack((xtrain, xval)), np.hstack((ytrain.values, yval.values)))  # re-create original model (optuna does not return...)
 # rf_model.n_estimators = 200
 # rf_model.fit(xval, yval)  # warm start adds new trees => aka. refits
 preds = svc_model.predict(xtest)

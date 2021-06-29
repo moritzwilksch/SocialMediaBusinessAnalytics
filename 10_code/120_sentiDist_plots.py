@@ -49,7 +49,7 @@ for ticker in tickers:
 #%%
 vcs_df = pd.DataFrame(vcs).T
 vcs_df.columns = tickers
-vcs_df = vcs_df/vcs_df.sum()
+# vcs_df = vcs_df/vcs_df.sum()
 melted_df = vcs_df.T.melt()
 
 plt.rcParams['font.size'] = 16
@@ -61,7 +61,8 @@ ax.set_xlabel("Predicted Sentiment Class")
 ax.yaxis.set_major_formatter(lambda _, x: f"{x*10:.0f}%")
 ax.set_ylabel("Mean (SD) Percentage")
 sns.despine()
-plt.savefig(root_path + "30_results/plots/all-senti-distsML.svg")
+# plt.savefig(root_path + "30_results/plots/all-senti-distsML.svg")
+plt.show()
 plt.close()
 
 
