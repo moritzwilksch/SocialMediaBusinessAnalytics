@@ -15,7 +15,7 @@ c = Console(highlight=False)
 root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
-
+#%%
 ticker = "INTC"
 
 for ticker in tickers:

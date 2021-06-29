@@ -24,3 +24,29 @@ TEST Accuracy = 0.4766
    macro avg       0.48      0.48      0.47       128
 weighted avg       0.48      0.48      0.48       128
 
+rf
+{'max_depth': 14, 'min_samples_leaf': 20, 'max_features': 0.7319939418114051, 'ccp_alpha': 2.993292420985183}
+VALIDATION Accuracy = 0.5109
+TEST Accuracy = 0.5222
+              precision    recall  f1-score   support
+
+       False       0.00      0.00      0.00        43
+        True       0.52      1.00      0.69        47
+
+    accuracy                           0.52        90
+   macro avg       0.26      0.50      0.34        90
+weighted avg       0.27      0.52      0.36        90
+
+lgbm
+{'boosting_type': 'goss', 'alpha': 8.918833167339733, 'lambda_': 7.023362742184519, 'subsample': 0.5426960831582485, 'max_depth': 6, 'learning_rate': 0.3636734756209866, 'num_leaves': 4, 'n_estimators': 297}
+VALIDATION Accuracy = 0.6848
+TEST Accuracy = 0.4333
+              precision    recall  f1-score   support
+
+       False       0.42      0.47      0.44        43
+        True       0.45      0.40      0.43        47
+
+    accuracy                           0.43        90
+   macro avg       0.43      0.43      0.43        90
+weighted avg       0.44      0.43      0.43        90
+

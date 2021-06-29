@@ -16,7 +16,7 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "TSLA"
+ticker = "NFLX"
 
 SENTI = 'ml_sentiment'
 # SENTI = 'vader'
@@ -82,7 +82,8 @@ def objective_rf(trial):
         max_features=max_features,
         ccp_alpha=ccp_alpha,
         n_jobs=-1,
-        random_state=42
+        random_state=42,
+        # oob_score=True
     )
     
     rf.fit(xtrain, ytrain)
@@ -106,6 +107,7 @@ rf_model = RandomForestClassifier(
     ccp_alpha=study.best_params['ccp_alpha'],
     random_state=42,
     n_jobs=-1,
+    # oob_score=True
     # warm_start=True
 )
 rf_model.fit(pd.concat((xtrain, xval)), pd.concat((ytrain, yval)))
@@ -116,6 +118,14 @@ preds = rf_model.predict(xtest)
 print(f"{study.best_params} -> {study.best_value:.4f}")
 eval_classification(ytest, preds)
 print(classification_report(ytest, preds))
+
+#%%
+price = pd.read_parquet(root_path + f"20_outputs/financial_ts/{ticker}_stock.parquet")['Close']
+testprice = price.loc[ytest.index[:-1]]
+fig, ax = plt.subplots(figsize=(14, 7))
+ax.plot(testprice.index, testprice.ffill(), color='k')
+ax.scatter(testprice.index[preds[:-1]], testprice.ffill()[preds[:-1]], marker='^', color='green', s=64, zorder=5)
+ax.scatter(testprice.index[~preds[:-1]], testprice.ffill()[~preds[:-1]], marker='v', color='red', s=64, zorder=5)
 
 #%%
 with open(root_path + f"20_outputs/benchmarks/{ticker}/{SENTI}/statsDiffRatio.log", 'a') as f:

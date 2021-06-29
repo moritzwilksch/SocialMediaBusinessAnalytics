@@ -108,7 +108,9 @@ def load_and_join_for_modeling(ticker: str, version: Literal['vader', 'ml_sentim
 def train_val_test_split(data: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """ Given data returns xtrain, ytrain, xval, yval, xtest, ytest for 596/128/128 split """
     TRAIN_VAL_CUTOFF = "2020-08-18"
+    TRAIN_VAL_CUTOFF = "2020-10-31" ### ATTENTION
     VAL_TEST_CUTOFF = "2020-12-24"
+    VAL_TEST_CUTOFF = "2021-01-31" ### ATTENTION
 
     train = data.loc[:TRAIN_VAL_CUTOFF]
     val = data.loc[pd.to_datetime(TRAIN_VAL_CUTOFF) + pd.DateOffset(1):VAL_TEST_CUTOFF]

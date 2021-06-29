@@ -1,50 +1,50 @@
 ==== TSLA ====
-MAE = 0.03280
-z std. MAE = 0.502
-Accuracy = 0.5760
+MAE = 0.03407
+z std. MAE = 0.528
+Accuracy = 0.4943
 
 ==== AAPL ====
-MAE = 0.01685
-z std. MAE = 0.577
-Accuracy = 0.5360
+MAE = 0.01555
+z std. MAE = 0.524
+Accuracy = 0.5287
 
 ==== AMZN ====
-MAE = 0.01320
-z std. MAE = 0.535
-Accuracy = 0.5680
+MAE = 0.01173
+z std. MAE = 0.463
+Accuracy = 0.5517
 
 ==== FB ====
-MAE = 0.01785
-z std. MAE = 0.676
-Accuracy = 0.5520
+MAE = 0.01613
+z std. MAE = 0.605
+Accuracy = 0.5402
 
 ==== MSFT ====
-MAE = 0.01263
-z std. MAE = 0.509
-Accuracy = 0.5440
+MAE = 0.01153
+z std. MAE = 0.459
+Accuracy = 0.5057
 
 ==== TWTR ====
-MAE = 0.02348
-z std. MAE = 0.668
-Accuracy = 0.5360
+MAE = 0.02442
+z std. MAE = 0.697
+Accuracy = 0.5517
 
 ==== AMD ====
-MAE = 0.02114
-z std. MAE = 0.492
-Accuracy = 0.5200
+MAE = 0.02309
+z std. MAE = 0.547
+Accuracy = 0.4828
 
 ==== NFLX ====
-MAE = 0.01634
-z std. MAE = 0.540
-Accuracy = 0.5440
+MAE = 0.01364
+z std. MAE = 0.438
+Accuracy = 0.5747
 
 ==== NVDA ====
-MAE = 0.02253
-z std. MAE = 0.587
-Accuracy = 0.6000
+MAE = 0.02545
+z std. MAE = 0.675
+Accuracy = 0.6092
 
 ==== INTC ====
-MAE = 0.02057
-z std. MAE = 0.728
-Accuracy = 0.5200
+MAE = 0.01927
+z std. MAE = 0.679
+Accuracy = 0.5057
 
