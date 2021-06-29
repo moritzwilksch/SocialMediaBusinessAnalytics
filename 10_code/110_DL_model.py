@@ -44,6 +44,8 @@ def days_in_trend(returns):
     return res[1:]
 
 
+# df = df.assign(diff=df.pct_pos - df.pct_neg)
+# df = df.assign(ratio=df.pct_pos/(df.pct_neg+1e-6))
 df = df.assign(days_in_trend=days_in_trend(df['return']))
 df = df.assign(dow=df.index.weekday)
 df = df.assign(moy=df.index.month)
@@ -78,9 +80,9 @@ tf.random.set_seed(42)
 
 def objective(trial):
     DROPOUT = trial.suggest_float('dropout', 0, 1)
-    units1 = 2 ** trial.suggest_int('units1', 4, 11) 
-    units2 = 2 ** trial.suggest_int('units2', 4, 11) 
-    epochs = trial.suggest_int('epochs', 1, 300) 
+    units1 = 2 ** trial.suggest_int('units1', 2, 11) 
+    units2 = 2 ** trial.suggest_int('units2', 2, 11) 
+    epochs = trial.suggest_int('epochs', 1, 100) 
     act = trial.suggest_categorical('act', ['sigmoid', 'relu'])
     net = tf.keras.Sequential([
         tf.keras.layers.Dense(units1, activation=act, kernel_regularizer='l2'),
@@ -132,11 +134,11 @@ net = tf.keras.Sequential([
 #%%
 from helpers import lr_finder
 def get_net():
-    DROPOUT = 0.04
+    DROPOUT = 0.44
     net = tf.keras.Sequential([
-        tf.keras.layers.Dense(2**9, activation='relu', kernel_regularizer='l2'),
-        tf.keras.layers.Dropout(DROPOUT),
         tf.keras.layers.Dense(2**11, activation='relu', kernel_regularizer='l2'),
+        tf.keras.layers.Dropout(DROPOUT),
+        tf.keras.layers.Dense(2**2, activation='relu', kernel_regularizer='l2'),
         tf.keras.layers.Dropout(DROPOUT),
         tf.keras.layers.Dense(1, activation='sigmoid'),
     ])
@@ -156,14 +158,14 @@ hist = net.fit(
     y=ytrain,
     # x=np.vstack((xtrain_ss.values, xval_ss.values)),
     # y=np.hstack((ytrain.values, yval.values)),
-    # validation_data=(xval_ss, yval),
-    validation_split=0.2,
+    validation_data=(xval_ss, yval),
+    # validation_split=0.2,
     batch_size=8,
-    epochs=300,
-    callbacks=[
-        tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100, restore_best_weights=True),
-        tf.keras.callbacks.ModelCheckpoint('kerastrash/model', monitor='val_loss', save_best_only=True, save_weights_only=True)
-        ],
+    epochs=85,
+    # callbacks=[
+    #     tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, restore_best_weights=True),
+    #     tf.keras.callbacks.ModelCheckpoint('kerastrash/model', monitor='val_loss', save_best_only=True, save_weights_only=True)
+    #     ],
 
 )
 

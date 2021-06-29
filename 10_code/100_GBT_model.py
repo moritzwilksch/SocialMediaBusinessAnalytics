@@ -16,10 +16,10 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "INTC"
+ticker = "TSLA"
 
-# SENTI = 'ml_sentiment'
-SENTI = 'vader'
+SENTI = 'ml_sentiment'
+# SENTI = 'vader'
 
 # close_price = pd.read_parquet(root_path + "20_outputs/financial_ts/INTC_stock.parquet")['Close'].ffill()
 df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
@@ -50,7 +50,8 @@ def days_in_trend(returns):
             res.append(0)
     return res[1:]
 
-
+# df = df.assign(diff=df.pct_pos - df.pct_neg)
+# df = df.assign(ratio=df.pct_pos/(df.pct_neg+1e-6))
 df = df.assign(days_in_trend=days_in_trend(df['return']))
 df = df.assign(dow=df.index.weekday)
 df = df.assign(moy=df.index.month)
@@ -117,7 +118,7 @@ eval_classification(ytest, preds)
 print(classification_report(ytest, preds))
 
 #%%
-with open(root_path + f"20_outputs/benchmarks/{ticker}/{SENTI}/stats.log", 'a') as f:
+with open(root_path + f"20_outputs/benchmarks/{ticker}/{SENTI}/statsDiffRatio.log", 'a') as f:
     f.write(f"{MODEL}\n")
     f.write(f"{study.best_params}\nVALIDATION Accuracy = {study.best_value:.4f}\n")
     f.write(f"TEST Accuracy = {eval_classification(ytest, preds):.4f}" + "\n")
@@ -196,7 +197,7 @@ print(classification_report(ytest, preds))
 
 
 #%%
-with open(root_path + f"20_outputs/benchmarks/{ticker}/{SENTI}/stats.log", 'a') as f:
+with open(root_path + f"20_outputs/benchmarks/{ticker}/{SENTI}/statsDiffRatio.log", 'a') as f:
     f.write(f"{MODEL}\n")
     f.write(f"{study.best_params}\nVALIDATION Accuracy = {study.best_value:.4f}\n")
     f.write(f"TEST Accuracy = {eval_classification(ytest, preds):.4f}" + "\n")
