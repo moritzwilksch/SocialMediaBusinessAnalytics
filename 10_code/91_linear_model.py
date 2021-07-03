@@ -10,7 +10,9 @@ tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", 
 
 
 #%%
-SENTI = "ml_sentiment"
+SENTI = "vader"
+
+
 exog = "num_tweets".split()
 endog = f"label {SENTI}".split()
 # orders_til_5 = list(itertools.product(range(1, 6), range(1, 6)))
@@ -26,18 +28,17 @@ for ticker in tickers:
     # test = pd.concat((xtest, ytest), axis=1)
     for order in orders_to_test:
         c.print(f"[INFO] Fitting order = {order}...")
-        model = sm.tsa.VARMAX(train[endog], exog=train[exog], order=order)
+        model = sm.tsa.VARMAX(train[endog], exog=train[exog], order=order)  # ORIGINAL
         res = model.fit(maxiter=250)
         if not res.mle_retvals.get('converged'):
             c.print("[ERROR] MLE not converged!", style="white on red")
             acc = mae = -1
         else:
             print(res.summary())
-            preds = res.forecast(exog=val[exog].values, steps=128)
+            preds = res.forecast(exog=val[exog].values, steps=92)
             mae, acc = eval_regression(yval, preds.label)
         results.append({'order': order, 'mae': mae, 'acc': acc, 'ticker': ticker})
-
     c.print(f"[INFO] Done with {ticker}!", style="white on green")
 
 #%%
-pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + f"30_results/VARX_paramtuning_{SENTI}.csv", sep=";")
+pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + f"30_results/VARX_paramtuning_{SENTI}_NEW.csv", sep=";")

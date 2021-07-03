@@ -16,10 +16,10 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "INTC"
+ticker = "MSFT"
 
-# SENTI = 'ml_sentiment'
-SENTI = 'vader'
+SENTI = 'ml_sentiment'
+# SENTI = 'vader'
 
 df: pd.DataFrame = load_and_join_for_modeling(ticker, SENTI)
 
@@ -93,18 +93,24 @@ xs = np.arange(0, 100)
 ys = [scheduler(x) for x in xs]
 plt.plot(xs, ys)
 
+
+
 # %%
-def get_net(dropout=0.2, l2=0.01, act='relu', units1=32, units2=16, lr=3e-4):
+def get_net(dropout=0.2, l2=0.01, act='relu', units1=32, units2=16, lr=3e-4, optim='adam'):
 
     net = tf.keras.Sequential([
         tf.keras.layers.Dense(units1, activation=act, kernel_regularizer=tf.keras.regularizers.l2(l2)),
         tf.keras.layers.Dropout(dropout),
-        tf.keras.layers.Dense(units2, activation=act, kernel_regularizer=tf.keras.regularizers.l2(l2)),
-        tf.keras.layers.Dropout(dropout),
+        # tf.keras.layers.BatchNormalization(),
+        # tf.keras.layers.Dense(units2, activation=act, kernel_regularizer=tf.keras.regularizers.l2(l2)),
+        # tf.keras.layers.Dropout(dropout),
+        # tf.keras.layers.BatchNormalization(),
         tf.keras.layers.Dense(1, activation='sigmoid'),
     ])
 
-    net.compile(tf.keras.optimizers.Adam(lr), 'binary_crossentropy', metrics=['accuracy'],)
+    optim = tf.keras.optimizers.Adam(10**-2) if optim == 'adam' else tf.keras.optimizers.SGD(10**-2) if optim == 'sgd' else None
+
+    net.compile(optim, 'binary_crossentropy', metrics=['accuracy'],)
     return net
 
 
@@ -117,6 +123,7 @@ def objective(trial):
         dropout=trial.suggest_float('dropout', 0, 1),
         l2=trial.suggest_float('l2', 1e-5, 1, log=True),
         act=trial.suggest_categorical('act', ['sigmoid', 'relu', 'tanh']),
+        optim=trial.suggest_categorical('optim', ['adam', 'sgd']),
     )
 
     net = get_net(units1=64, units2=64, **params)
@@ -130,9 +137,9 @@ def objective(trial):
         epochs=epochs,
         verbose=True,
         callbacks=[
-            tf.keras.callbacks.LearningRateScheduler(scheduler),
+            # tf.keras.callbacks.LearningRateScheduler(scheduler),
             # tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, restore_best_weights=True),
-            tf.keras.callbacks.ModelCheckpoint('kerastrash/model', monitor='val_loss', save_best_only=True, save_weights_only=True)
+            tf.keras.callbacks.ModelCheckpoint('kerastrash/model', monitor='val_accuracy', save_best_only=True, save_weights_only=True)
         ],
         workers=-1
 
@@ -147,17 +154,21 @@ sampler = optuna.samplers.TPESampler(seed=42)
 study = optuna.create_study(direction='maximize', sampler=sampler)
 study.optimize(objective, n_trials=25)
 
+
 # %%
 
-net = get_net()
+net = get_net(units1=64, units2=64, optim='adam')
 
-net.compile('adam', 'binary_crossentropy', metrics=['accuracy'],)
 net.build(input_shape=xtrain_ss.shape)
 net.fit(xtrain_ss, ytrain, callbacks=[lr_finder.LRFinder(1e-4, 1)], epochs=10)
 
+
+
+
 # %%
-net = get_net(**study.best_params)
-net.compile(tf.keras.optimizers.Adam(10**-1.5), 'binary_crossentropy', metrics=['accuracy'],)
+net = get_net(units1=64, units2=64, **study.best_params)
+# net = get_net(units1=64, units2=64)
+# net.compile("SGD", 'binary_crossentropy', metrics=['accuracy'],)
 
 hist = net.fit(
     x=xtrain_ss,
@@ -169,9 +180,9 @@ hist = net.fit(
     batch_size=32,
     epochs=100,
     callbacks=[
-        tf.keras.callbacks.LearningRateScheduler(scheduler),
+        # tf.keras.callbacks.LearningRateScheduler(scheduler),
         # tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, restore_best_weights=True),
-        tf.keras.callbacks.ModelCheckpoint('kerastrash/model', monitor='val_loss', save_best_only=True, save_weights_only=True)
+        tf.keras.callbacks.ModelCheckpoint('kerastrash/model', monitor='val_accuracy', save_best_only=True, save_weights_only=True)
         ],
 
 )

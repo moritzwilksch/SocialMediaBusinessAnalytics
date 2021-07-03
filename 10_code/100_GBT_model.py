@@ -16,7 +16,7 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "NFLX"
+ticker = "NVDA"
 
 SENTI = 'ml_sentiment'
 # SENTI = 'vader'
@@ -72,7 +72,7 @@ xtrain, ytrain, xval, yval, xtest, ytest = train_val_test_split(df)
 
 #%%
 def objective_rf(trial):
-    max_depth = trial.suggest_int('max_depth', 2, 32, 3)
+    max_depth = trial.suggest_int('max_depth', 2, 32, 3) 
     min_samples_leaf = trial.suggest_int('min_samples_leaf', 1, 20, 1)
     max_features = trial.suggest_float('max_features', 0, 1)
     ccp_alpha = trial.suggest_float('ccp_alpha', 0, 5)
