@@ -58,7 +58,7 @@ real_delta_bl = real_delta_bl.sort_values(ascending=False)  # Sort!
 nosenti_delta_bl = best_nosenti - baseline
 nosenti_delta_bl = nosenti_delta_bl[real_delta_bl.index]  # carry over sort
 
-WIDTH = 0.3
+WIDTH = 0.35
 
 fig, ax = plt.subplots(figsize=(10, 6))
 
@@ -67,7 +67,7 @@ xs = np.arange(10)
 
 ax.bar(x=xs - WIDTH/2, width=WIDTH, height=real_delta_bl, zorder=5, color='#3CBBB1', ec='k', label="With Sentiment")
 ax.bar(x=xs + WIDTH/2, width=WIDTH, height=nosenti_delta_bl, zorder=5,  color='#005366', ec='k', label="Without Sentiment")
-ax.legend(frameon=False)
+ax.legend(frameon=False, loc='lower left')
 
 ax.set(
     xticks=np.arange(10),

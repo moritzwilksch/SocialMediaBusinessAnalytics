@@ -111,6 +111,10 @@ else:
     cv: TfidfVectorizer = joblib.load(root_path + "20_outputs/count_vectorizer.joblib")
     model: LogisticRegression = joblib.load(root_path + "20_outputs/sentiment_model.joblib")
 
+#%%
+# CV - Score for metrics
+from sklearn.model_selection import cross_validate
+cross_validate(LogisticRegression(C=3.1225, max_iter=150), bow, df.sentiment, cv=KFold(shuffle=True), scoring='precision_weighted')
 
 #%%
 rev = {v: k for k, v in cv.vocabulary_.items()}

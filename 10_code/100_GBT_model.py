@@ -16,7 +16,7 @@ root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
 # %%
-ticker = "NVDA"
+ticker = "NFLX"
 
 SENTI = 'ml_sentiment'
 # SENTI = 'vader'

@@ -1,4 +1,5 @@
 # %%
+from tkinter import Label
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -52,6 +53,31 @@ vcs_df.columns = tickers
 # vcs_df = vcs_df/vcs_df.sum()
 melted_df = vcs_df.T.melt()
 
+#%%
+plt.rcParams['font.size'] = 16
+fig, ax = plt.subplots(figsize=(15, 6))
+
+total = vcs_df.sum()
+rel_df = (vcs_df/total)[tickers[::-1]]
+
+b1 = ax.barh(y=rel_df.columns, width=rel_df.loc[-1], ec='k', color='tab:red', label='Negative')
+ax.barh(y=rel_df.columns, width=rel_df.loc[0], ec='k', left=rel_df.loc[-1], color='silver', label='Neutral')
+ax.barh(y=rel_df.columns, width=rel_df.loc[1], ec='k', left=rel_df.loc[-1] + rel_df.loc[0], color='limegreen', label='Positive')
+
+ax.legend(loc=(0, 1), ncol=3, )
+
+
+
+ax.xaxis.set_major_formatter(lambda x, _: f"{x*100:.0f}%")
+sns.despine(left=True)
+
+plt.tight_layout()
+plt.savefig(root_path + "30_results/plots/all-senti-distsML.svg")
+plt.close()
+
+
+
+#%%
 plt.rcParams['font.size'] = 16
 fig, ax = plt.subplots(figsize=(8, 6))
 
