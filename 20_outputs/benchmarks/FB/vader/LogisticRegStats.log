@@ -1,0 +1,13 @@
+Logistic Regression
+{'C': 0.1988390009667121, 'penalty': 'l1'}
+VALIDATION Accuracy = 0.5870
+TEST Accuracy = 0.5222
+              precision    recall  f1-score   support
+
+       False       0.50      0.07      0.12        43
+        True       0.52      0.94      0.67        47
+
+    accuracy                           0.52        90
+   macro avg       0.51      0.50      0.40        90
+weighted avg       0.51      0.52      0.41        90
+
