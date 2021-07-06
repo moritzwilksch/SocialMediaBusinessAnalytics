@@ -1,0 +1,120 @@
+[TSLA]: ml_sentiment
+Order = 2
+Accuracy = 0.5172413793103449
+[TSLA]: vader
+Order = 2
+Accuracy = 0.5402298850574713
+[AAPL]: ml_sentiment
+Order = 2
+Accuracy = 0.5287356321839081
+[AAPL]: vader
+Order = 2
+Accuracy = 0.5287356321839081
+[AMZN]: ml_sentiment
+Order = 2
+Accuracy = 0.4942528735632184
+[AMZN]: vader
+Order = 2
+Accuracy = 0.45977011494252873
+[FB]: ml_sentiment
+Order = 2
+Accuracy = 0.42528735632183906
+[FB]: vader
+Order = 3
+Accuracy = 0.4367816091954023
+[MSFT]: ml_sentiment
+Order = 2
+Accuracy = 0.5172413793103449
+[MSFT]: vader
+Order = 2
+Accuracy = 0.5287356321839081
+[TWTR]: ml_sentiment
+Order = 2
+Accuracy = 0.41379310344827586
+[TWTR]: vader
+Order = 2
+Accuracy = 0.42528735632183906
+[AMD]: ml_sentiment
+Order = 3
+Accuracy = 0.5287356321839081
+[AMD]: vader
+Order = 3
+Accuracy = 0.5057471264367817
+[NFLX]: ml_sentiment
+Order = 2
+Accuracy = 0.6206896551724138
+[NFLX]: vader
+Order = 2
+Accuracy = 0.5402298850574713
+[NVDA]: ml_sentiment
+Order = 2
+Accuracy = 0.5287356321839081
+[NVDA]: vader
+Order = 3
+Accuracy = 0.4482758620689655
+[INTC]: ml_sentiment
+Order = 2
+Accuracy = 0.5402298850574713
+[INTC]: vader
+Order = 5
+Accuracy = 0.6206896551724138
+[TSLA]: ml_sentiment
+Order = 2
+Accuracy = 0.5172413793103449
+[TSLA]: vader
+Order = 2
+Accuracy = 0.5402298850574713
+[AAPL]: ml_sentiment
+Order = 2
+Accuracy = 0.5287356321839081
+[AAPL]: vader
+Order = 2
+Accuracy = 0.5287356321839081
+[AMZN]: ml_sentiment
+Order = 2
+Accuracy = 0.4942528735632184
+[AMZN]: vader
+Order = 2
+Accuracy = 0.45977011494252873
+[FB]: ml_sentiment
+Order = 2
+Accuracy = 0.42528735632183906
+[FB]: vader
+Order = 3
+Accuracy = 0.4367816091954023
+[MSFT]: ml_sentiment
+Order = 2
+Accuracy = 0.5172413793103449
+[MSFT]: vader
+Order = 2
+Accuracy = 0.5287356321839081
+[TWTR]: ml_sentiment
+Order = 2
+Accuracy = 0.41379310344827586
+[TWTR]: vader
+Order = 2
+Accuracy = 0.42528735632183906
+[AMD]: ml_sentiment
+Order = 3
+Accuracy = 0.5287356321839081
+[AMD]: vader
+Order = 3
+Accuracy = 0.5057471264367817
+[NFLX]: ml_sentiment
+Order = 2
+Accuracy = 0.6206896551724138
+[NFLX]: vader
+Order = 2
+Accuracy = 0.5402298850574713
+[NVDA]: ml_sentiment
+Order = 2
+Accuracy = 0.5287356321839081
+[NVDA]: vader
+Order = 3
+Accuracy = 0.4482758620689655
+[INTC]: ml_sentiment
+Order = 2
+Accuracy = 0.5402298850574713
+[INTC]: vader
+Order = 5
+Accuracy = 0.6206896551724138
