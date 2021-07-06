@@ -90,7 +90,7 @@ for ticker, SENTI in product(tickers, ('ml_sentiment', 'vader')):
     results.append(
         (ticker, SENTI, acc)
     )
-
+    
     with open(root_path + f"30_results/CorrectVARX.log", 'a') as f:
         f.write(f"[{ticker}]: {SENTI}\n")
         f.write(f"Order = {parse.search('AIC -> {n},', model.select_order(maxlags=8).__str__()).named.get('n', 'NA')}\n")

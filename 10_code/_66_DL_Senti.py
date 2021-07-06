@@ -1,4 +1,6 @@
 # %%
+from sklearn.feature_extraction.text import TfidfTransformer
+import tensorflow as tf
 from gc import callbacks
 import optuna
 import joblib
@@ -29,75 +31,66 @@ df
 df = replace_with_generics(df)  # replace numbers, hashtags, tickers
 df.tweet = df.tweet.apply(prepare_tweet_for_sentimodel)
 
-cv = CountVectorizer(token_pattern=r'[^\s]+')
-# cv = TfidfVectorizer(token_pattern=r'[^\s]+')
-bow = cv.fit_transform(df.tweet)
-
-# Check vocabulary:
-# with open(root_path + "20_outputs/cv_vocab.txt", 'w') as f:
-#     for v in cv.vocabulary_.keys():
-#         f.writelines(v + "\n")
-
-#%%
-xtrain, xval, ytrain, yval = train_test_split(bow, df.sentiment, shuffle=True, random_state=42)
-xtrain, xval = xtrain.toarray(), xval.toarray()
-ytrain = np.eye(3)[ytrain.values]
-yval = np.eye(3)[yval.values]
-
-ss = StandardScaler()
-ss.fit(xtrain)
-xtrain = ss.transform(xtrain)
-xval = ss.transform(xval)
-#%%
-import tensorflow as tf
-
-def build_net():
-    DROPOUT = 0.5
-    net = tf.keras.Sequential([
-        tf.keras.layers.Dense(32, activation='sigmoid', kernel_regularizer=tf.keras.regularizers.l2(0.1)),
-        tf.keras.layers.Dropout(DROPOUT),
-        # tf.keras.layers.Dense(32, activation='relu', kernel_regularizer='l2'),
-        # tf.keras.layers.Dropout(DROPOUT),
-        tf.keras.layers.Dense(3, activation='softmax')
-    ])
-
-    net.compile(tf.keras.optimizers.Adam(3e-4), 'categorical_crossentropy', metrics=['accuracy'])
-    return net
-
-#%%
-model = tf.keras.wrappers.scikit_learn.KerasClassifier(build_net, epochs=3,)
-
-cross_val_score(model, bow.toarray(), df.sentiment, cv=KFold(5, shuffle=True))
-
-#%%
-net = build_net()
-hist = net.fit(xtrain, ytrain, validation_data=(xval, yval), epochs=25, batch_size=8)
-pd.DataFrame({'acc': hist.history['accuracy'], 'validation': hist.history['val_accuracy']}).plot()
-
-
-#%%
-preds = np.argmax(net.predict(xval), axis=1)
-print(classification_report(np.argmax(yval, axis=1), preds))
 
 # %%
-if False:
-    print("=== Random Forest ===")
-    rs_rf = GridSearchCV(
-        RandomForestClassifier(n_estimators=100, random_state=123),
-        {
-            'criterion': ['gini', 'entropy'],
-            'max_depth': [50, 100, 150, 200, 250, 300, 500, 1000],
+xtrain, xval, ytrain, yval = train_test_split(df.tweet, df.sentiment, shuffle=True, random_state=42)
 
-        },
-        cv=KFold(5, shuffle=True),
-        n_jobs=-1,
-        scoring="accuracy"
-    )
-
-    rs_rf.fit(bow, df.sentiment)
-    print(f"{rs_rf.best_params_} -> {rs_rf.best_score_:.4f}")
+ytrain, yval = np.eye(3)[ytrain.values], np.eye(3)[yval.values]
 
 # %%
-if False:
-    joblib.dump(cv, root_path + "20_outputs/count_vectorizer.joblib")
-    joblib.dump(lr, root_path + "20_outputs/sentiment_model.joblib")
+
+VOCAB_SIZE = 5000
+encoder = tf.keras.layers.experimental.preprocessing.TextVectorization(max_tokens=VOCAB_SIZE, output_sequence_length=100)
+encoder.adapt(xtrain.values)
+# encoder(xtrain.iloc[0])
+
+
+# %%
+model = tf.keras.Sequential([
+    encoder,
+    tf.keras.layers.Embedding(input_dim=encoder.vocabulary_size()+1, output_dim=5, input_length=100, mask_zero=True),
+    # tf.keras.layers.Conv1D(filters=32, kernel_size=2),
+    # tf.keras.layers.MaxPooling1D(),
+    tf.keras.layers.GlobalAveragePooling1D(),
+    tf.keras.layers.Dropout(0.25),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(units=64, activation='relu'),
+    tf.keras.layers.Dense(3, activation='softmax')
+])
+
+model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
+
+model.fit(xtrain, ytrain, validation_data=(xval, yval), epochs=20, callbacks=[tf.keras.callbacks.ModelCheckpoint("./kerastrash/checkpoint", 'accuracy', save_best_only=True, save_weights_only=True)])
+
+
+#%%
+model.load_weights('./kerastrash/checkpoint')
+preds = model.predict(xval).argmax(axis=1) - 1
+print(classification_report(preds, yval.argmax(axis=1) - 1))
+
+
+
+
+
+
+
+
+
+
+# %%
+
+df_train = df.loc[xtrain.index]
+df_val = df.loc[xval.index]
+
+# %%
+cv = TfidfVectorizer(token_pattern=r'[^\s]+')
+bow_train = cv.fit_transform(df_train.tweet)
+bow_val = cv.transform(df_val.tweet)
+
+# %%
+lr = LogisticRegression(C=3, max_iter=150)
+lr.fit(bow_train, df_train.sentiment)
+
+# %%
+preds = lr.predict(bow_val)
+print(classification_report(preds, df_val.sentiment))
