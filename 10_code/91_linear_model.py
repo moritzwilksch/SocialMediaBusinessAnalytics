@@ -13,7 +13,8 @@ tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", 
 
 
 #%%
-SENTI = "vader"
+# Broken VARMAX shit
+"""SENTI = "vader"
 
 
 exog = "num_tweets".split()
@@ -49,9 +50,8 @@ for ticker in tickers:
     c.print(f"[INFO] Done with {ticker}!", style="white on green")
     break
 
-#%%
 pd.DataFrame(results).pivot(index='order', values='acc', columns='ticker').to_csv(root_path + f"30_results/VARX_paramtuning_{SENTI}_NEW.csv", sep=";")
-
+"""
 
 
 
@@ -101,6 +101,14 @@ for ticker, SENTI in product(tickers, ('ml_sentiment', 'vader')):
 pd.DataFrame(results, columns=('ticker', 'sentiment', 'acc')).pivot(index='ticker', columns='sentiment', values='acc').loc[tickers].round(3).to_csv(root_path + f"30_results/CorrectVARX.csv", sep=';')
 
 
+#%%
+# grab order for each model for export
+with open(root_path + "30_results/CorrectVARX.log", 'r') as f:
+    s = "".join(f.readlines())
+
+parsed_list = list(parse.findall("[{ticker}]: {senti}\nOrder = {order}", s))[-20:]
+
+pd.DataFrame([x.named for x in parsed_list]).pivot(index='ticker', columns='senti', values='order').loc[tickers].to_csv(root_path + f"30_results/CorrectVARX_orders.csv", sep=';')
 
 
 
