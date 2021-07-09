@@ -18,6 +18,8 @@ colors = {
 root_path = "../"
 tickers = ["TSLA", "AAPL", "AMZN", "FB", "MSFT", "TWTR", "AMD", "NFLX", "NVDA", "INTC"]
 
+plt.rcParams['font.family'] = ['Arial']
+plt.rcParams['font.size'] = 14
 
 senti = "vader"
 ticker = "TSLA"
@@ -55,7 +57,7 @@ melted_df = vcs_df.T.melt()
 
 #%%
 plt.rcParams['font.size'] = 16
-fig, ax = plt.subplots(figsize=(15, 6))
+fig, ax = plt.subplots(figsize=(15, 5))
 
 total = vcs_df.sum()
 rel_df = (vcs_df/total)[tickers[::-1]]
@@ -64,9 +66,9 @@ b1 = ax.barh(y=rel_df.columns, width=rel_df.loc[-1], ec='k', color='tab:red', la
 ax.barh(y=rel_df.columns, width=rel_df.loc[0], ec='k', left=rel_df.loc[-1], color='silver', label='Neutral')
 ax.barh(y=rel_df.columns, width=rel_df.loc[1], ec='k', left=rel_df.loc[-1] + rel_df.loc[0], color='limegreen', label='Positive')
 
-ax.legend(loc=(0, 1), ncol=3, )
+ax.legend(loc=(0, 1), ncol=3, frameon=False)
 
-
+ax.set(xlim=(0, 1))
 
 ax.xaxis.set_major_formatter(lambda x, _: f"{x*100:.0f}%")
 sns.despine(left=True)
