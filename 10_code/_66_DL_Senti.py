@@ -39,26 +39,33 @@ ytrain, yval = np.eye(3)[ytrain.values], np.eye(3)[yval.values]
 
 # %%
 
-VOCAB_SIZE = 5000
-encoder = tf.keras.layers.experimental.preprocessing.TextVectorization(max_tokens=VOCAB_SIZE, output_sequence_length=100)
+VOCAB_SIZE = 7000
+encoder = tf.keras.layers.experimental.preprocessing.TextVectorization(max_tokens=VOCAB_SIZE, output_mode='count')
 encoder.adapt(xtrain.values)
 # encoder(xtrain.iloc[0])
 
 
 # %%
+
+
+
+# %%
 model = tf.keras.Sequential([
     encoder,
-    tf.keras.layers.Embedding(input_dim=encoder.vocabulary_size()+1, output_dim=5, input_length=100, mask_zero=True),
+    # tf.keras.layers.Embedding(input_dim=encoder.vocabulary_size()+1, output_dim=5, input_length=100, mask_zero=True),
+    # tf.keras.layers.Dropout(0.25),
     # tf.keras.layers.Conv1D(filters=32, kernel_size=2),
     # tf.keras.layers.MaxPooling1D(),
-    tf.keras.layers.GlobalAveragePooling1D(),
-    tf.keras.layers.Dropout(0.25),
-    tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(units=64, activation='relu'),
+    # tf.keras.layers.AveragePooling1D(),
+    # tf.keras.layers.GlobalAveragePooling1D(),
+    # tf.keras.layers.Dropout(0.5),
+    # tf.keras.layers.Flatten(),
+    tf.keras.layers.Dense(units=32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.03)),
+    tf.keras.layers.Dense(units=32, activation='relu', kernel_regularizer=tf.keras.regularizers.l2(0.03)),
     tf.keras.layers.Dense(3, activation='softmax')
 ])
 
-model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
+model.compile(tf.keras.optimizers.Adam(), 'categorical_crossentropy', metrics=['accuracy'])
 
 model.fit(xtrain, ytrain, validation_data=(xval, yval), epochs=20, callbacks=[tf.keras.callbacks.ModelCheckpoint("./kerastrash/checkpoint", 'accuracy', save_best_only=True, save_weights_only=True)])
 
