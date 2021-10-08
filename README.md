@@ -1,6 +1,10 @@
 # SocialMediaBusinessAnalytics
 Research project for Social Media and Business Analytics module: Sentiment and stock prices
 
+<img width="233" alt="image" src="https://user-images.githubusercontent.com/58488209/136593182-a9fc8bad-1129-4c8c-b546-431b1250e59a.png">
+
+Final report available as `SMR_Report_Submission.pdf`
+
 # Companies Studied
 Top 10 most tweeted-about stocks in 2021 (with minor adjustment):
 ![Top 10 companies by number of tweets](30_results/plots/pre_study.svg)
