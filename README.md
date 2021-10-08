@@ -3,7 +3,7 @@ Research project for Social Media and Business Analytics module: Sentiment and s
 
 <img width="233" alt="image" src="https://user-images.githubusercontent.com/58488209/136593182-a9fc8bad-1129-4c8c-b546-431b1250e59a.png">
 
-Final report available as `SMR_Report_Submission.pdf`
+Final report available as `SMRP_Report_Submission.pdf`
 
 # Companies Studied
 Top 10 most tweeted-about stocks in 2021 (with minor adjustment):
