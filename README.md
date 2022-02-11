@@ -1,5 +1,5 @@
 # Social Media & Business Analytics <img width=90 align="right" src="https://www.uni-potsdam.de/fileadmin/projects/zim/images/logos/Unilogo.svg">
-Research project on the use of sentiment for short-term stock return forecasting
+Research project on the use of sentiment for short-term stock return forecasting. Published at the WI22 conference: Download the paper [here](https://aisel.aisnet.org/wi2022/student_track/student_track/38/)
 
 <img width="233" alt="image" src="https://user-images.githubusercontent.com/58488209/136593182-a9fc8bad-1129-4c8c-b546-431b1250e59a.png">
 
