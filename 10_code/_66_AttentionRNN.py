@@ -53,80 +53,33 @@ vectorizer.adapt(xtrain)
 trainset = tf.data.Dataset.from_tensor_slices((xtrain, ytrain))
 valset = tf.data.Dataset.from_tensor_slices((xval, yval))
 
-
-# vectorizer = tf.keras.layers.TextVectorization()
-# vectorizer.adapt(xtrain.to_numpy())
-
-
-# %%
-class TransformerBlock(tf.keras.layers.Layer):
-    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
-        super(TransformerBlock, self).__init__()
-        self.att = tf.keras.layers.MultiHeadAttention(
-            num_heads=num_heads, key_dim=embed_dim
-        )
-        self.ffn = keras.Sequential(
-            [
-                tf.keras.layers.Dense(ff_dim, activation="relu"),
-                tf.keras.layers.Dense(embed_dim),
-            ]
-        )
-        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
-        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
-        self.dropout1 = tf.keras.layers.Dropout(rate)
-        self.dropout2 = tf.keras.layers.Dropout(rate)
-
-    def call(self, inputs, training):
-        attn_output = self.att(inputs, inputs)
-        attn_output = self.dropout1(attn_output, training=training)
-        out1 = self.layernorm1(inputs + attn_output)
-        ffn_output = self.ffn(out1)
-        ffn_output = self.dropout2(ffn_output, training=training)
-        return self.layernorm2(out1 + ffn_output)
-
-
-class TokenAndPositionEmbedding(tf.keras.layers.Layer):
-    def __init__(self, maxlen, vocab_size, embed_dim):
-        super(TokenAndPositionEmbedding, self).__init__()
-        self.token_emb = tf.keras.layers.Embedding(
-            input_dim=vocab_size, output_dim=embed_dim, mask_zero=True
-        )
-        self.pos_emb = tf.keras.layers.Embedding(input_dim=maxlen, output_dim=embed_dim)
-
-    def call(self, x):
-        maxlen = tf.shape(x)[-1]
-        positions = tf.range(start=0, limit=maxlen, delta=1)
-        positions = self.pos_emb(positions)
-        x = self.token_emb(x)
-        return x + positions
-
-
 #%%
-class MyTransformer(tf.keras.Model):
+class AttentionRNN(tf.keras.Model):
     def __init__(self, vectorizer):
         super().__init__()
         self.vectorizer = vectorizer
-        self.embedding = TokenAndPositionEmbedding(128, vectorizer.vocabulary_size(), 16)
-        self.transformer = TransformerBlock(16, 1, 64, rate=0.5)
-        self.flatten1 = tf.keras.layers.Reshape((-1,))
+        self.embedding = tf.keras.layers.Embedding(
+            input_dim=vectorizer.vocabulary_size() + 1, output_dim=32, mask_zero=True
+        )
+        self.att = tf.keras.layers.MultiHeadAttention(num_heads=4, key_dim=32)
         # self.flatten1 = tf.keras.layers.GlobalAveragePooling1D()
-        self.dense1 = tf.keras.layers.Dense(units=64, activation="swish")
+        self.rnn = tf.keras.layers.GRU(128)
+        self.dense1 = tf.keras.layers.Dense(units=128, activation="swish")
         self.out = tf.keras.layers.Dense(units=3, activation="softmax")
 
     def call(self, inputs):
         tokens = self.vectorizer(inputs)
 
         x = self.embedding(tokens)
-        x = self.transformer(x)
 
-        x = self.flatten1(x)
+        x = self.rnn(x)
         x = self.dense1(x)
         out = self.out(x)
 
         return out
 
 
-model = MyTransformer(vectorizer)
+model = AttentionRNN(vectorizer)
 model.compile(
     tf.keras.optimizers.Adam(),
     tf.keras.losses.CategoricalCrossentropy(),
@@ -141,7 +94,7 @@ tb_callback = tf.keras.callbacks.TensorBoard(
     log_dir="./kerastrash/tb", histogram_freq=0, write_graph=True, write_images=True
 )
 model.fit(
-    trainset.batch(16).prefetch(10),
+    trainset.batch(64).prefetch(10),
     validation_data=valset.batch(512),  # .prefetch(10),
     epochs=10,
     callbacks=[tb_callback],
@@ -152,11 +105,3 @@ for x, y in valset.batch(1024):
     # print(vectorizer(x).shape)
     model(x)
     print(x, y)
-
-
-#%%
-
-for x, y in trainset.batch(2).take(1):
-    x = vectorizer(x)
-    x = TokenAndPositionEmbedding(128, vectorizer.vocabulary_size(), 32)(x)
-    print((TransformerBlock(32, 1, 128, rate=0.5)(x)).shape)
