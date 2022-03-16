@@ -147,3 +147,4 @@ dmypy.json
 20_outputs/ml_sentiments/
 20_outputs/clean_tweets/
 
+10_code/kerastrash/*
