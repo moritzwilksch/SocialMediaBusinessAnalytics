@@ -106,11 +106,13 @@ class MyTransformer(tf.keras.Model):
     def __init__(self, vectorizer):
         super().__init__()
         self.vectorizer = vectorizer
-        self.embedding = TokenAndPositionEmbedding(128, vectorizer.vocabulary_size(), 16)
-        self.transformer = TransformerBlock(16, 1, 64, rate=0.5)
-        self.flatten1 = tf.keras.layers.Reshape((-1,))
-        # self.flatten1 = tf.keras.layers.GlobalAveragePooling1D()
+        self.embedding = TokenAndPositionEmbedding(128, vectorizer.vocabulary_size(), 128)
+        self.transformer = TransformerBlock(128, 1, 64, rate=0.5)
+        # self.flatten1 = tf.keras.layers.Reshape((-1,))
+        self.flatten1 = tf.keras.layers.GlobalAveragePooling1D()
+        self.dropout1 = tf.keras.layers.Dropout(0.5)
         self.dense1 = tf.keras.layers.Dense(units=64, activation="swish")
+        self.dropout2 = tf.keras.layers.Dropout(0.5)
         self.out = tf.keras.layers.Dense(units=3, activation="softmax")
 
     def call(self, inputs):
@@ -120,7 +122,9 @@ class MyTransformer(tf.keras.Model):
         x = self.transformer(x)
 
         x = self.flatten1(x)
+        x = self.dropout1(x)
         x = self.dense1(x)
+        x = self.dropout2(x)
         out = self.out(x)
 
         return out
@@ -159,4 +163,6 @@ for x, y in valset.batch(1024):
 for x, y in trainset.batch(2).take(1):
     x = vectorizer(x)
     x = TokenAndPositionEmbedding(128, vectorizer.vocabulary_size(), 32)(x)
+    print(x.shape)
+    # print(tf.keras.layers.MultiHeadAttention(num_heads=1, key_dim=32)(x, x))
     print((TransformerBlock(32, 1, 128, rate=0.5)(x)).shape)

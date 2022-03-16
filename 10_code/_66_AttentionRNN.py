@@ -62,8 +62,10 @@ class AttentionRNN(tf.keras.Model):
             input_dim=vectorizer.vocabulary_size() + 1, output_dim=32, mask_zero=True
         )
         self.att = tf.keras.layers.MultiHeadAttention(num_heads=4, key_dim=32)
-        # self.flatten1 = tf.keras.layers.GlobalAveragePooling1D()
-        self.rnn = tf.keras.layers.GRU(128)
+
+        # self.cnn1 = tf.keras.layers.Conv1D(16, 3)
+        self.flatten1 = tf.keras.layers.GlobalAveragePooling1D()
+        # self.rnn = tf.keras.layers.GRU(64)
         self.dense1 = tf.keras.layers.Dense(units=128, activation="swish")
         self.out = tf.keras.layers.Dense(units=3, activation="softmax")
 
@@ -71,8 +73,11 @@ class AttentionRNN(tf.keras.Model):
         tokens = self.vectorizer(inputs)
 
         x = self.embedding(tokens)
+        x = self.att(x, x)
 
-        x = self.rnn(x)
+        # x = self.cnn1(x)
+        # x = self.rnn(x)
+        x = self.flatten1(x)
         x = self.dense1(x)
         out = self.out(x)
 
@@ -81,7 +86,7 @@ class AttentionRNN(tf.keras.Model):
 
 model = AttentionRNN(vectorizer)
 model.compile(
-    tf.keras.optimizers.Adam(),
+    tf.keras.optimizers.Adam(learning_rate=0.01),
     tf.keras.losses.CategoricalCrossentropy(),
     metrics=["accuracy"],
 )
