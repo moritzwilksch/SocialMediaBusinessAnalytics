@@ -71,8 +71,12 @@ class TransformerBlock(tf.keras.layers.Layer):
                 tf.keras.layers.Dense(embed_dim),
             ]
         )
-        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
-        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm1 = tf.keras.layers.LayerNormalization(
+            epsilon=0.01
+        )  # epsilon=1e-6)
+        self.layernorm2 = tf.keras.layers.LayerNormalization(
+            epsilon=0.01
+        )  # epsilon=1e-6)
         self.dropout1 = tf.keras.layers.Dropout(rate)
         self.dropout2 = tf.keras.layers.Dropout(rate)
 
@@ -91,7 +95,25 @@ class TokenAndPositionEmbedding(tf.keras.layers.Layer):
         self.token_emb = tf.keras.layers.Embedding(
             input_dim=vocab_size, output_dim=embed_dim, mask_zero=True
         )
-        self.pos_emb = tf.keras.layers.Embedding(input_dim=maxlen, output_dim=embed_dim)
+
+        # position_embedding_matrix = self.get_position_encoding(maxlen, embed_dim)
+        self.pos_emb = tf.keras.layers.Embedding(
+            input_dim=maxlen,
+            output_dim=embed_dim,
+            embeddings_regularizer=tf.keras.regularizers.l2(0.1)
+            # weights=[position_embedding_matrix],
+            # trainable=False,
+        )
+
+    # non-learnable positional encoding also does not work well...
+    # def get_position_encoding(self, seq_len, d, n=10000):
+    #     P = np.zeros((seq_len, d))
+    #     for k in range(seq_len):
+    #         for i in np.arange(int(d / 2)):
+    #             denominator = np.power(n, 2 * i / d)
+    #             P[k, 2 * i] = np.sin(k / denominator)
+    #             P[k, 2 * i + 1] = np.cos(k / denominator)
+    #     return P
 
     def call(self, x):
         maxlen = tf.shape(x)[-1]
@@ -103,16 +125,17 @@ class TokenAndPositionEmbedding(tf.keras.layers.Layer):
 
 #%%
 class MyTransformer(tf.keras.Model):
-    def __init__(self, vectorizer):
+    def __init__(self, vectorizer, dropout_rate=0.25):
         super().__init__()
+        self.dropout_rate = dropout_rate
         self.vectorizer = vectorizer
-        self.embedding = TokenAndPositionEmbedding(128, vectorizer.vocabulary_size(), 128)
-        self.transformer = TransformerBlock(128, 1, 64, rate=0.5)
+        self.embedding = TokenAndPositionEmbedding(128, vectorizer.vocabulary_size(), 64)
+        self.transformer = TransformerBlock(64, 1, 64, rate=dropout_rate)
         # self.flatten1 = tf.keras.layers.Reshape((-1,))
         self.flatten1 = tf.keras.layers.GlobalAveragePooling1D()
-        self.dropout1 = tf.keras.layers.Dropout(0.5)
+        self.dropout1 = tf.keras.layers.Dropout(dropout_rate)
         self.dense1 = tf.keras.layers.Dense(units=64, activation="swish")
-        self.dropout2 = tf.keras.layers.Dropout(0.5)
+        self.dropout2 = tf.keras.layers.Dropout(dropout_rate)
         self.out = tf.keras.layers.Dense(units=3, activation="softmax")
 
     def call(self, inputs):
@@ -130,7 +153,7 @@ class MyTransformer(tf.keras.Model):
         return out
 
 
-model = MyTransformer(vectorizer)
+model = MyTransformer(vectorizer, dropout_rate=0.5)
 model.compile(
     tf.keras.optimizers.Adam(),
     tf.keras.losses.CategoricalCrossentropy(),
@@ -166,3 +189,4 @@ for x, y in trainset.batch(2).take(1):
     print(x.shape)
     # print(tf.keras.layers.MultiHeadAttention(num_heads=1, key_dim=32)(x, x))
     print((TransformerBlock(32, 1, 128, rate=0.5)(x)).shape)
+    print(tf.keras.layers.GlobalAveragePooling1D()(x).shape)
