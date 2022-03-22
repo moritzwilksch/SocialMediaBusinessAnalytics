@@ -34,7 +34,7 @@ df.tweet = df.tweet.apply(prepare_tweet_for_sentimodel)
 
 # %%
 xtrain, xval, ytrain, yval = train_test_split(
-    df.tweet, df.sentiment + 1, shuffle=True, random_state=42
+    df.tweet, df.sentiment, shuffle=True, random_state=42
 )
 
 # ytrain, yval = np.eye(3)[ytrain.values], np.eye(3)[yval.values]
@@ -51,21 +51,27 @@ valvec = vectorizer.transform(xval).astype(np.float32)
 
 print(trainvec.shape)
 #%%
-from lightgbm import LGBMClassifier
+from lightgbm import LGBMClassifier, LGBMRegressor
 
-clf = LGBMClassifier(n_estimators=1000)
+# clf = LGBMClassifier(n_estimators=1000)
+clf = LGBMRegressor(n_estimators=1000)
 
 clf.fit(
     trainvec,
     ytrain,
     eval_set=(valvec, yval),
-    eval_metric=["multiclass"],
+    # eval_metric=["multiclass"],
+    eval_metric=["mae"],
     early_stopping_rounds=50,
 )
 
+
+#%%
 from sklearn.metrics import classification_report, confusion_matrix
 
 pred = clf.predict(valvec)
+THRESH = 0.35
+pred = np.select([pred < -THRESH, pred < THRESH, pred >= THRESH], [-1, 0, 1])
 print(classification_report(yval, pred))
 
 
